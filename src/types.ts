@@ -8,6 +8,7 @@ export interface Waybill {
   waybillNo: string; // 运单号
   destination: string; // 目的地
   declarationType: string; // 报关方式
+  tradeMode: string; // 贸易方式 (9610/9710/9810/0110/1039)
   eta: string; // ETA
   productName: string; // 品名
   etd: string; // ETD
@@ -55,6 +56,7 @@ export interface FilterParams {
   operator: string;
   trackingNo: string;
   declarationType: string;
+  tradeMode: string;
   clientRemark: string;
   warehouseAttr: string;
   createTimeStart: string;

@@ -33,7 +33,19 @@ export default function App() {
     const saved = localStorage.getItem('ans_waybills');
     if (saved) {
       try {
-        setWaybills(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        // Migration: add tradeMode if missing from old data
+        if (parsed.length > 0 && !('tradeMode' in parsed[0])) {
+          const defaultMap = Object.fromEntries(INITIAL_WAYBILLS.map(w => [w.id, w.tradeMode]));
+          const migrated = parsed.map((w: Waybill) => ({
+            ...w,
+            tradeMode: w.tradeMode || defaultMap[w.id] || '9610'
+          }));
+          setWaybills(migrated);
+          localStorage.setItem('ans_waybills', JSON.stringify(migrated));
+        } else {
+          setWaybills(parsed);
+        }
       } catch (err) {
         console.error('Failed to parse waybills from localStorage, resetting:', err);
         setWaybills(INITIAL_WAYBILLS);
@@ -107,6 +119,18 @@ export default function App() {
     alert(`Success: 与会运单批注已附带统一备注内容。`);
   };
 
+  // Bulk trade mode update
+  const handleBulkUpdateTradeMode = (ids: string[], tradeMode: string) => {
+    const updated = waybills.map(w => {
+      if (ids.includes(w.id)) {
+        return { ...w, tradeMode };
+      }
+      return w;
+    });
+    updateWaybills(updated);
+    alert(`Success: 已成功将所选的 ${ids.length} 票运单贸易方式变更为 ${tradeMode}。`);
+  };
+
   const handleInvoiceSave = (waybillId: string, updatedFields: Partial<Waybill>) => {
     const updated = waybills.map(w => {
       if (w.id === waybillId) {
@@ -147,6 +171,7 @@ export default function App() {
     if (filterParams.operator && !w.operator.toLowerCase().includes(filterParams.operator.trim().toLowerCase())) return false;
     if (filterParams.trackingNo && !w.trackingNo.toLowerCase().includes(filterParams.trackingNo.trim().toLowerCase())) return false;
     if (filterParams.declarationType && filterParams.declarationType !== '全部' && w.declarationType !== filterParams.declarationType) return false;
+    if (filterParams.tradeMode && filterParams.tradeMode !== '全部' && w.tradeMode !== filterParams.tradeMode) return false;
     if (filterParams.clientRemark && !w.clientRemark.toLowerCase().includes(filterParams.clientRemark.trim().toLowerCase())) return false;
     if (filterParams.fbaNo && !w.fbaNo.toLowerCase().includes(filterParams.fbaNo.trim().toLowerCase())) return false;
     if (filterParams.channel && !w.channel.toLowerCase().includes(filterParams.channel.trim().toLowerCase())) return false;
@@ -247,6 +272,7 @@ export default function App() {
                   }}
                   onDelete={handleDeleteWaybill}
                   onBulkUpdateStatus={handleBulkUpdateStatus}
+                  onBulkUpdateTradeMode={handleBulkUpdateTradeMode}
                   onBulkUpdateRemark={handleBulkUpdateRemark}
                   onOpenStats={() => setShowStats(true)}
                   currentStatusTab={currentStatusTab}
