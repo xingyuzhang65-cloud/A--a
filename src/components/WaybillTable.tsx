@@ -12,6 +12,7 @@ interface WaybillTableProps {
   onEdit: (waybill: Waybill) => void;
   onDelete: (id: string) => void;
   onBulkUpdateStatus: (ids: string[], newStatus: WaybillStatus) => void;
+  onBulkUpdateTradeMode: (ids: string[], tradeMode: string) => void;
   onBulkUpdateRemark: (ids: string[], type: 'client' | 'internal', remark: string) => void;
   onOpenStats: () => void;
   currentStatusTab: string;
@@ -29,6 +30,7 @@ export default function WaybillTable({
   onEdit,
   onDelete,
   onBulkUpdateStatus,
+  onBulkUpdateTradeMode,
   onBulkUpdateRemark,
   onOpenStats,
   currentStatusTab,
@@ -49,6 +51,7 @@ export default function WaybillTable({
   // Bulk Edit Dialog triggers
   const [bulkRemarkType, setBulkRemarkType] = useState<'client' | 'internal' | null>(null);
   const [bulkRemarkVal, setBulkRemarkVal] = useState<string>('');
+  const [showBulkTradeMode, setShowBulkTradeMode] = useState<boolean>(false);
 
   // Status options with baseline numbers merged with live ones for realistic UI representation
   const statusSpecs: { label: string; statusKey: string }[] = [
@@ -194,26 +197,22 @@ export default function WaybillTable({
           {/* Status Mass Actions dropdown */}
           <div className="relative group">
             <button className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded text-xs font-semibold text-slate-700 flex items-center gap-1 cursor-pointer">
-              批量动作 ▾
+              批量操作 ▾
             </button>
-            <div className="absolute left-0 mt-1.5 w-40 bg-white border border-slate-200 rounded shadow-lg hidden group-hover:block z-20">
+            <div className="absolute left-0 mt-1.5 w-44 bg-white border border-slate-200 rounded shadow-lg hidden group-hover:block z-20">
               <div className="py-1">
-                {(['入仓', '出库', '出仓', '运输', '签收', '扣货', '取消'] as WaybillStatus[]).map(st => (
-                  <button
-                    key={st}
-                    onClick={() => {
-                      if (selectedIds.length === 0) {
-                        alert('请先勾选需要变更状态的运单！');
-                        return;
-                      }
-                      onBulkUpdateStatus(selectedIds, st);
-                      setSelectedIds([]);
-                    }}
-                    className="w-full text-left px-4 py-2 text-xs hover:bg-indigo-50 hover:text-[#5c67f2] text-slate-700"
-                  >
-                    设为《{st}》
-                  </button>
-                ))}
+                <button
+                  onClick={() => {
+                    if (selectedIds.length === 0) {
+                      alert('请先勾选需要修改贸易方式的运单！');
+                      return;
+                    }
+                    setShowBulkTradeMode(true);
+                  }}
+                  className="w-full text-left px-4 py-2 text-xs hover:bg-indigo-50 hover:text-[#5c67f2] text-slate-700"
+                >
+                  批量修改贸易方式
+                </button>
               </div>
             </div>
           </div>
@@ -313,6 +312,38 @@ export default function WaybillTable({
         </div>
       )}
 
+      {/* 3.1 Bulk Trade Mode Dialog Panel */}
+      {showBulkTradeMode && (
+        <div className="p-4 bg-slate-50 border-b border-slate-150 flex items-center gap-4 animate-fadeIn">
+          <div className="text-xs font-bold text-slate-700">
+            批量修改【贸易方式】:
+          </div>
+          <select
+            className="border border-slate-200 p-1.5 text-xs rounded bg-white cursor-pointer"
+            defaultValue=""
+            onChange={(e) => {
+              if (!e.target.value) return;
+              onBulkUpdateTradeMode(selectedIds, e.target.value);
+              setShowBulkTradeMode(false);
+              setSelectedIds([]);
+            }}
+          >
+            <option value="" disabled>请选择贸易方式</option>
+            <option value="9610">9610</option>
+            <option value="9710">9710</option>
+            <option value="9810">9810</option>
+            <option value="0110">0110</option>
+            <option value="1039">1039</option>
+          </select>
+          <button
+            onClick={() => setShowBulkTradeMode(false)}
+            className="px-3 py-1 border border-slate-200 bg-white text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer"
+          >
+            取消
+          </button>
+        </div>
+      )}
+
       {/* 4. Table Core Area */}
       <div className="w-full overflow-x-auto">
         <table className="w-full text-left border-collapse">
@@ -345,6 +376,7 @@ export default function WaybillTable({
                 目的地 {sortField === 'destination' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}
               </th>
               <th className="px-4 py-3">报关方式</th>
+              <th className="px-4 py-3">贸易方式</th>
               <th className="px-4 py-3">ETA</th>
               <th className="px-4 py-3 min-w-[140px]">商品品名</th>
               <th className="px-4 py-3">ETD</th>
@@ -411,6 +443,11 @@ export default function WaybillTable({
                       w.declarationType === '一般贸易' ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-slate-100 text-slate-600'
                     }`}>
                       {w.declarationType}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-200 font-mono">
+                      {w.tradeMode || '-'}
                     </span>
                   </td>
                   <td className="px-4 py-3.5 font-mono text-slate-500">{w.eta || '-'}</td>
@@ -481,7 +518,7 @@ export default function WaybillTable({
 
             {paginatedWaybills.length === 0 && (
               <tr>
-                <td colSpan={18} className="py-12 text-center text-slate-400 font-medium text-xs bg-slate-50/50">
+                <td colSpan={19} className="py-12 text-center text-slate-400 font-medium text-xs bg-slate-50/50">
                   ⚠️ 没有找到匹配任何关键字或筛选条件的业务运单。您可以点击“重置”按钮清除检索词。
                 </td>
               </tr>
@@ -604,6 +641,10 @@ export default function WaybillTable({
                 <div>
                   <span className="text-slate-400 block mb-0.5">报关方式</span>
                   <strong className="text-slate-800">{viewingWaybill.declarationType}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">贸易方式</span>
+                  <strong className="text-slate-800 font-mono">{viewingWaybill.tradeMode || '-'}</strong>
                 </div>
                 <div>
                   <span className="text-slate-400 block mb-0.5">预计开船/机日 (ETD)</span>
