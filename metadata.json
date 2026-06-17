@@ -1,0 +1,6 @@
+{
+  "name": "安速货运运单管理",
+  "description": "安速货运业务运单、客户管理、出入仓及客服运单全流程跟踪管理系统",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
