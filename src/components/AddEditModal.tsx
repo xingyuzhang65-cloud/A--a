@@ -16,7 +16,6 @@ const initialWaybill = (): Omit<Waybill, 'id' | 'idx' | 'createTime'> => ({
   waybillNo: '',
   destination: 'US-ONT8',
   declarationType: '买单报关',
-  tradeMode: '9610',
   eta: '',
   productName: '',
   etd: '',
@@ -56,7 +55,6 @@ export default function AddEditModal({ isOpen, onClose, onSave, editingWaybill }
         waybillNo: editingWaybill.waybillNo || '',
         destination: editingWaybill.destination || 'US-ONT8',
         declarationType: editingWaybill.declarationType || '买单报关',
-        tradeMode: editingWaybill.tradeMode || '9610',
         eta: editingWaybill.eta || '',
         productName: editingWaybill.productName || '',
         etd: editingWaybill.etd || '',
@@ -245,24 +243,6 @@ export default function AddEditModal({ isOpen, onClose, onSave, editingWaybill }
                   <option value="买单报关">买单报关</option>
                   <option value="一般贸易">一般贸易</option>
                   <option value="自单报关">自单报关</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-xs text-slate-500 font-semibold mb-1">
-                  贸易方式
-                </label>
-                <select
-                  name="tradeMode"
-                  value={formData.tradeMode}
-                  onChange={handleChange}
-                  className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none"
-                >
-                  <option value="9610">9610</option>
-                  <option value="9710">9710</option>
-                  <option value="9810">9810</option>
-                  <option value="0110">0110</option>
-                  <option value="1039">1039</option>
                 </select>
               </div>
 

@@ -23,7 +23,6 @@ const initialFilters: FilterParams = {
   operator: '',
   trackingNo: '',
   declarationType: '全部',
-  tradeMode: '全部',
   clientRemark: '',
   warehouseAttr: '',
   createTimeStart: '',
@@ -172,15 +171,17 @@ export default function FilterForm({ onSearch, onReset }: FilterFormProps) {
                 </div>
 
                 <div className="flex flex-col">
-                  <label className="text-xs font-semibold text-slate-500 mb-1.5">FBA单号</label>
-                  <input
-                    type="text"
-                    name="fbaNo"
-                    placeholder="支持批量模糊"
-                    value={filters.fbaNo}
+                  <label className="text-xs font-semibold text-slate-500 mb-1.5">制作发票</label>
+                  <select
+                    name="invoiceMade"
+                    value={filters.invoiceMade}
                     onChange={handleInputChange}
-                    className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 placeholder:text-slate-400"
-                  />
+                    className="px-2.5 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 cursor-pointer"
+                  >
+                    <option value="全部">全部类型</option>
+                    <option value="已制作">已制作发票</option>
+                    <option value="未制作">未制作发票</option>
+                  </select>
                 </div>
 
                 <div className="flex flex-col">
@@ -211,56 +212,12 @@ export default function FilterForm({ onSearch, onReset }: FilterFormProps) {
                 </div>
 
                 <div className="flex flex-col">
-                  <label className="text-xs font-semibold text-slate-500 mb-1.5">贸易方式</label>
-                  <select
-                    name="tradeMode"
-                    value={filters.tradeMode}
-                    onChange={handleInputChange}
-                    className="px-2.5 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 cursor-pointer"
-                  >
-                    <option value="全部">全部贸易方式</option>
-                    <option value="9610">9610</option>
-                    <option value="9710">9710</option>
-                    <option value="9810">9810</option>
-                    <option value="0110">0110</option>
-                    <option value="1039">1039</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col">
                   <label className="text-xs font-semibold text-slate-500 mb-1.5">交税方式</label>
                   <input
                     type="text"
                     name="taxPayment"
                     placeholder="如 DDP/DDU"
                     value={filters.taxPayment}
-                    onChange={handleInputChange}
-                    className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 placeholder:text-slate-400"
-                  />
-                </div>
-              </div>
-
-              {/* Row 3 */}
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <div className="flex flex-col">
-                  <label className="text-xs font-semibold text-slate-500 mb-1.5">渠道</label>
-                  <input
-                    type="text"
-                    name="channel"
-                    placeholder="美森 / 以星 / 铁路"
-                    value={filters.channel}
-                    onChange={handleInputChange}
-                    className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 placeholder:text-slate-400"
-                  />
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="text-xs font-semibold text-slate-500 mb-1.5">转单号</label>
-                  <input
-                    type="text"
-                    name="trackingNo"
-                    placeholder="海外快递面单号"
-                    value={filters.trackingNo}
                     onChange={handleInputChange}
                     className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 placeholder:text-slate-400"
                   />
@@ -277,86 +234,17 @@ export default function FilterForm({ onSearch, onReset }: FilterFormProps) {
                     className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 placeholder:text-slate-400"
                   />
                 </div>
-
-                <div className="flex flex-col">
-                  <label className="text-xs font-semibold text-slate-500 mb-1.5">制作发票</label>
-                  <select
-                    name="invoiceMade"
-                    value={filters.invoiceMade}
-                    onChange={handleInputChange}
-                    className="px-2.5 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 cursor-pointer"
-                  >
-                    <option value="全部">全部类型</option>
-                    <option value="已制作">已制作发票</option>
-                    <option value="未制作">未制作发票</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="text-xs font-semibold text-slate-500 mb-1.5">国内查验室</label>
-                  <select
-                    name="customsRoom"
-                    value={filters.customsRoom}
-                    onChange={handleInputChange}
-                    className="px-2.5 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 cursor-pointer"
-                  >
-                    <option value="全部">全部</option>
-                    <option value="一号查验室">一号查验室</option>
-                    <option value="二号查验室">二号查验室</option>
-                    <option value="无">无</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="text-xs font-semibold text-slate-500 mb-1.5">有无退运保</label>
-                  <select
-                    name="hasInsurance"
-                    value={filters.hasInsurance}
-                    onChange={handleInputChange}
-                    className="px-2.5 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 cursor-pointer"
-                  >
-                    <option value="全部">全部</option>
-                    <option value="有">有</option>
-                    <option value="无">无</option>
-                  </select>
-                </div>
               </div>
 
-              {/* Row 4 */}
+              {/* Row 3 */}
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <div className="flex flex-col">
-                  <label className="text-xs font-semibold text-slate-500 mb-1.5">有无报关资料</label>
-                  <select
-                    name="hasDocs"
-                    value={filters.hasDocs}
-                    onChange={handleInputChange}
-                    className="px-2.5 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 cursor-pointer"
-                  >
-                    <option value="全部">全部</option>
-                    <option value="有">有</option>
-                    <option value="无">无</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="text-xs font-semibold text-slate-500 mb-1.5">业务员</label>
+                  <label className="text-xs font-semibold text-slate-500 mb-1.5">转单号</label>
                   <input
                     type="text"
-                    name="salesman"
-                    placeholder="业务员姓名"
-                    value={filters.salesman}
-                    onChange={handleInputChange}
-                    className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 placeholder:text-slate-400"
-                  />
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="text-xs font-semibold text-slate-500 mb-1.5">客服</label>
-                  <input
-                    type="text"
-                    name="customerService"
-                    placeholder="客服指派"
-                    value={filters.customerService}
+                    name="trackingNo"
+                    placeholder="海外快递面单号"
+                    value={filters.trackingNo}
                     onChange={handleInputChange}
                     className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 placeholder:text-slate-400"
                   />
@@ -394,9 +282,33 @@ export default function FilterForm({ onSearch, onReset }: FilterFormProps) {
                     />
                   </div>
                 </div>
+
+                <div className="flex flex-col">
+                  <label className="text-xs font-semibold text-slate-500 mb-1.5">FBA单号</label>
+                  <input
+                    type="text"
+                    name="fbaNo"
+                    placeholder="支持批量模糊"
+                    value={filters.fbaNo}
+                    onChange={handleInputChange}
+                    className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-xs font-semibold text-slate-500 mb-1.5">渠道</label>
+                  <input
+                    type="text"
+                    name="channel"
+                    placeholder="美森 / 以星 / 铁路"
+                    value={filters.channel}
+                    onChange={handleInputChange}
+                    className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 placeholder:text-slate-400"
+                  />
+                </div>
               </div>
 
-              {/* Row 5 */}
+              {/* Row 4 */}
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <div className="flex flex-col">
                   <label className="text-xs font-semibold text-slate-500 mb-1.5">内部备注</label>
@@ -411,7 +323,77 @@ export default function FilterForm({ onSearch, onReset }: FilterFormProps) {
                 </div>
 
                 <div className="flex flex-col">
-                  <label className="text-xs font-semibold text-slate-500 mb-1.5">品名 (空格为AND)</label>
+                  <label className="text-xs font-semibold text-slate-500 mb-1.5">业务员</label>
+                  <input
+                    type="text"
+                    name="salesman"
+                    placeholder="业务员姓名"
+                    value={filters.salesman}
+                    onChange={handleInputChange}
+                    className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-xs font-semibold text-slate-500 mb-1.5">客服</label>
+                  <input
+                    type="text"
+                    name="customerService"
+                    placeholder="客服指派"
+                    value={filters.customerService}
+                    onChange={handleInputChange}
+                    className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-xs font-semibold text-slate-500 mb-1.5">有无退运保</label>
+                  <select
+                    name="hasInsurance"
+                    value={filters.hasInsurance}
+                    onChange={handleInputChange}
+                    className="px-2.5 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 cursor-pointer"
+                  >
+                    <option value="全部">全部</option>
+                    <option value="有">有</option>
+                    <option value="无">无</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-xs font-semibold text-slate-500 mb-1.5">有无报关资料</label>
+                  <select
+                    name="hasDocs"
+                    value={filters.hasDocs}
+                    onChange={handleInputChange}
+                    className="px-2.5 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 cursor-pointer"
+                  >
+                    <option value="全部">全部</option>
+                    <option value="有">有</option>
+                    <option value="无">无</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-xs font-semibold text-slate-500 mb-1.5">国内查验室</label>
+                  <select
+                    name="customsRoom"
+                    value={filters.customsRoom}
+                    onChange={handleInputChange}
+                    className="px-2.5 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 cursor-pointer"
+                  >
+                    <option value="全部">全部</option>
+                    <option value="一号查验室">一号查验室</option>
+                    <option value="二号查验室">二号查验室</option>
+                    <option value="无">无</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 5 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex flex-col md:col-span-2 lg:col-span-1">
+                  <label className="text-xs font-semibold text-slate-500 mb-1.5">品名 (全模糊，空格为AND)</label>
                   <input
                     type="text"
                     name="productName"

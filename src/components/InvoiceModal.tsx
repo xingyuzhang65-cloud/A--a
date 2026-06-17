@@ -41,7 +41,7 @@ export default function InvoiceModal({ isOpen, waybill, onClose, onSave }: Invoi
   const [vatTaxNo, setVatTaxNo] = useState<string>('');
   const [declMethod, setDeclMethod] = useState<string>('报关退税');
   const [taxMethod, setTaxMethod] = useState<string>('包税');
-  const [tradeMethod, setTradeMethod] = useState<string>(waybill.tradeMode || '9610');
+  const [tradeMethod, setTradeMethod] = useState<string>('DDP');
 
   // Checkbox Materials state
   const [materials, setMaterials] = useState<string[]>(['玩具']);
@@ -75,9 +75,6 @@ export default function InvoiceModal({ isOpen, waybill, onClose, onSave }: Invoi
       }
 
       setAddressDetails('Parc dActivites des Pierres Blanches 59220 Denain');
-
-      // Sync tradeMode from waybill
-      setTradeMethod(waybill.tradeMode || '9610');
       
       // Initialize checkboxes
       if (waybill.productName.toLowerCase().includes('玩具') || waybill.productName.toLowerCase().includes('toy')) {
@@ -224,8 +221,7 @@ export default function InvoiceModal({ isOpen, waybill, onClose, onSave }: Invoi
       invoiceMade: isDraft ? '草稿录入中' : '已制作',
       zipCode: zipCode,
       destination: city || waybill.destination,
-      declarationValue: totalValue > 0 ? totalValue : waybill.declarationValue,
-      tradeMode: tradeMethod
+      declarationValue: totalValue > 0 ? totalValue : waybill.declarationValue
     });
 
     const statusMsg = isDraft ? '发票草稿保存成功！' : '发票制作完成并成功提交提交业务系统！';
@@ -489,24 +485,6 @@ export default function InvoiceModal({ isOpen, waybill, onClose, onSave }: Invoi
                   </div>
                 </div>
 
-                {/* Trade Mode — only visible when 报关退税 is selected */}
-                {declMethod === '报关退税' && (
-                  <div className="text-xs">
-                    <label className="text-slate-500 font-semibold mb-1 block">贸易方式：</label>
-                    <select
-                      className="w-full border border-slate-200 bg-white rounded p-2 text-xs focus:ring-1 focus:ring-[#3b82f6] outline-none cursor-pointer font-mono"
-                      value={tradeMethod}
-                      onChange={e => setTradeMethod(e.target.value)}
-                    >
-                      <option value="9610">9610</option>
-                      <option value="9710">9710</option>
-                      <option value="9810">9810</option>
-                      <option value="0110">0110</option>
-                      <option value="1039">1039</option>
-                    </select>
-                  </div>
-                )}
-
                 {/* Tax Payment Method */}
                 <div className="text-xs">
                   <label className="text-slate-500 font-semibold mb-1 block">
@@ -526,6 +504,22 @@ export default function InvoiceModal({ isOpen, waybill, onClose, onSave }: Invoi
                       </label>
                     ))}
                   </div>
+                </div>
+
+                {/* Trade Clause Code */}
+                <div className="text-xs">
+                  <label className="text-slate-400 font-medium mb-1 block">贸易方式：</label>
+                  <select
+                    className="w-full border border-slate-200 bg-white rounded p-2 text-xs focus:ring-1 focus:ring-[#3b82f6] outline-none cursor-pointer"
+                    value={tradeMethod}
+                    onChange={e => setTradeMethod(e.target.value)}
+                  >
+                    <option value="DDP">DDP (完税后交货)</option>
+                    <option value="DDU">DDU (未完税交货)</option>
+                    <option value="EXW">EXW (工厂交货)</option>
+                    <option value="FOB">FOB (船上交货)</option>
+                    <option value="CIF">CIF (成本加保费、运费)</option>
+                  </select>
                 </div>
               </div>
             </div>
