@@ -6,6 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
-ui-check.png
+ui-check*.png
 edge-profile-check*/
+edge-profile-vite*/
 edge-profile-dom/

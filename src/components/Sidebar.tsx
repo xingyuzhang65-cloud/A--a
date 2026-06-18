@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
 import {
-  FilePlus, Warehouse, FileText, ClipboardList, DollarSign, ShieldAlert,
-  Headphones, Globe, Coins, FileCheck, Receipt, PackageMinus, Wallet,
-  Wrench, ShoppingBag, Ruler, History, Box, Lock, ChevronDown, ChevronRight,
-  ChevronLeft, Menu
+  BarChart3,
+  Box,
+  ClipboardList,
+  Database,
+  Download,
+  FileText,
+  Grid2X2,
+  Package,
+  Settings,
+  ShoppingCart,
+  Tag,
+  Truck,
+  Wallet,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -13,194 +21,89 @@ interface SidebarProps {
   setIsCollapsed: (collapsed: boolean) => void;
 }
 
-export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsCollapsed }: SidebarProps) {
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    '业务运单': true,
-    '客服运单管理': false,
-    '海外中转单': false,
-    '财务运单': false,
-    '工单': false,
-    '服务订单': false,
-    '货件管理': false
-  });
+const railItems = [
+  { label: '单据', icon: FileText },
+  { label: '仓库', icon: ShoppingCart, active: true },
+  { label: '产品', icon: Box },
+  { label: '订单', icon: ClipboardList },
+  { label: '财务', icon: Database },
+  { label: '询价', icon: Tag },
+  { label: '统计', icon: Grid2X2 },
+  { label: '配置', icon: Settings },
+  { label: '管理', icon: Wallet },
+  { label: '导出', icon: Download },
+  { label: '系统', icon: Package },
+  { label: '营销', icon: BarChart3 },
+  { label: '预关', icon: Truck },
+];
 
-  const toggleGroup = (group: string) => {
-    setExpandedGroups(prev => ({
-      ...prev,
-      [group]: !prev[group]
-    }));
-  };
+const groups = [
+  { title: '运单', children: [{ label: '运单', id: 'waybills' }, { label: '跟单运单', id: 'follow-waybills' }, { label: '业务运单', id: 'business-waybills' }] },
+  { title: '提单', children: [] },
+  { title: '工单', children: [] },
+  { title: '打单', children: [] },
+  { title: '预留仓', children: [] },
+  { title: '海外中转单管理', children: [] },
+  { title: '货件管理', children: [] },
+];
 
-  const menuItems = [
-    { name: '预报下单', icon: FilePlus, id: 'forecast-order' },
-    { name: '未入仓运单', icon: Warehouse, id: 'unwarehoused' },
-    {
-      name: '业务运单',
-      icon: FileText,
-      id: 'business-waybills',
-      children: [
-        { name: '运单', icon: ClipboardList, id: 'waybills' },
-        { name: '运单报价', icon: DollarSign, id: 'waybill-quotes' }
-      ]
-    },
-    { name: '扣货管理', icon: ShieldAlert, id: 'withheld-cargo' },
-    {
-      name: '客服运单管理',
-      icon: Headphones,
-      id: 'customer-service-mgmt',
-      children: [
-        { name: '问题件处理', icon: ShieldAlert, id: 'issue-mgmt' },
-        { name: '退件管理', icon: PackageMinus, id: 'return-mgmt' }
-      ]
-    },
-    {
-      name: '海外中转单',
-      icon: Globe,
-      id: 'overseas-transit',
-      children: [
-        { name: '中转记录', icon: ClipboardList, id: 'transit-logs' }
-      ]
-    },
-    {
-      name: '财务运单',
-      icon: Coins,
-      id: 'financial-waybills',
-      children: [
-        { name: '对账单管理', icon: FileCheck, id: 'statements' }
-      ]
-    },
-    { name: '报价审批', icon: FileCheck, id: 'quote-approval' },
-    { name: '来款登记', icon: Receipt, id: 'receipt-matching' },
-    { name: '出仓单', icon: PackageMinus, id: 'out-warehouse-doc' },
-    { name: '客户余额', icon: Wallet, id: 'client-balances' },
-    {
-      name: '工单',
-      icon: Wrench,
-      id: 'work-orders',
-      children: [
-        { name: '我的工单', icon: Wrench, id: 'my-orders' }
-      ]
-    },
-    {
-      name: '服务订单',
-      icon: ShoppingBag,
-      id: 'service-orders',
-      children: [
-        { name: '标签打印', icon: ClipboardList, id: 'label-print' }
-      ]
-    },
-    { name: '修改材积运单', icon: Ruler, id: 'modify-volume' },
-    { name: '仓库费用日志', icon: History, id: 'warehouse-fees' },
-    {
-      name: '货件管理',
-      icon: Box,
-      id: 'cargo-mgmt',
-      children: [
-        { name: '装箱计划', icon: Box, id: 'packing-plan' }
-      ]
-    },
-    { name: '预留仓', icon: Lock, id: 'reserved-warehouse' }
-  ];
-
+export default function Sidebar({ currentTab, setCurrentTab, isCollapsed }: SidebarProps) {
   return (
-    <aside
-      className={`relative z-10 flex h-screen flex-col border-r border-[#dbe9f5] bg-[#edf7ff] text-[#36485c] transition-all duration-200 select-none ${
-        isCollapsed ? 'w-[64px]' : 'w-[176px]'
-      }`}
-      id="ans-sidebar"
-    >
-      <div className="h-[58px] flex items-center gap-2 px-4 bg-[#f7fbff] border-b border-[#dbe9f5] overflow-hidden">
-        <div className="relative h-8 w-10 shrink-0">
-          <span className="absolute left-0 top-4 h-2 w-7 -skew-x-12 bg-[#ff9f1a]" />
-          <span className="absolute left-4 top-2 h-2 w-7 -skew-x-12 bg-[#e73135]" />
-        </div>
-        {!isCollapsed && (
-          <div className="leading-tight">
-            <div className="text-[15px] font-black text-[#e73135] tracking-tight">ANSU</div>
-            <div className="text-[10px] font-semibold text-[#7b8794] whitespace-nowrap">安速货运</div>
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1 overflow-y-auto py-2 sidebar-scroll">
-        {menuItems.map(item => {
-          const IconComponent = item.icon;
-          const isGroup = !!item.children;
-          const isExpanded = expandedGroups[item.name];
-          const isGroupActive = currentTab === item.id || item.children?.some(child => child.id === currentTab);
-
-          if (isGroup) {
-            return (
-              <div key={item.id}>
-                <button
-                  onClick={() => !isCollapsed && toggleGroup(item.name)}
-                  title={item.name}
-                  className={`relative flex min-h-[40px] w-full items-center gap-2 px-5 text-[13px] font-semibold transition-colors ${
-                    isGroupActive ? 'text-[#1890ff]' : 'text-[#32465a] hover:bg-[#e1f1ff]'
-                  } ${isCollapsed ? 'justify-center px-0' : ''}`}
-                >
-                  {isGroupActive && <span className="absolute right-0 top-2 bottom-2 w-[3px] bg-[#1890ff]" />}
-                  <IconComponent className="h-4 w-4 shrink-0" />
-                  {!isCollapsed && <span className="truncate">{item.name}</span>}
-                  {!isCollapsed && (
-                    <span className="ml-auto text-[#68788a]">
-                      {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                    </span>
-                  )}
-                </button>
-
-                {!isCollapsed && isExpanded && item.children && (
-                  <div className="py-1">
-                    {item.children.map(child => {
-                      const ChildIcon = child.icon;
-                      const isActiveChild = currentTab === child.id;
-                      return (
-                        <button
-                          key={child.id}
-                          onClick={() => setCurrentTab(child.id)}
-                          className={`relative flex min-h-[36px] w-full items-center gap-2 pl-10 pr-3 text-[12px] font-semibold transition-colors ${
-                            isActiveChild ? 'bg-[#e6f4ff] text-[#1890ff]' : 'text-[#4e6074] hover:bg-[#e7f4ff]'
-                          }`}
-                        >
-                          {isActiveChild && <span className="absolute right-0 top-1 bottom-1 w-[3px] bg-[#1890ff]" />}
-                          <ChildIcon className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">{child.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          }
-
-          const isActive = currentTab === item.id;
+    <aside className={`h-screen shrink-0 bg-white border-r border-[#e4ebf4] flex select-none ${isCollapsed ? 'w-[48px]' : 'w-[184px]'}`}>
+      <div className="w-[40px] bg-[#0758ae] text-white flex flex-col items-center py-2 gap-1">
+        {railItems.map((item) => {
+          const Icon = item.icon;
           return (
             <button
-              key={item.id}
-              onClick={() => setCurrentTab(item.id)}
-              title={item.name}
-              className={`relative flex min-h-[40px] w-full items-center gap-2 px-5 text-[13px] font-semibold transition-colors ${
-                isActive ? 'bg-[#e6f4ff] text-[#1890ff]' : 'text-[#32465a] hover:bg-[#e1f1ff]'
-              } ${isCollapsed ? 'justify-center px-0' : ''}`}
+              key={item.label}
+              className={`w-full h-[45px] flex flex-col items-center justify-center gap-1 text-[11px] font-semibold ${item.active ? 'bg-[#0b4f9d]' : 'hover:bg-[#0d68c8]'}`}
+              title={item.label}
             >
-              {isActive && <span className="absolute right-0 top-2 bottom-2 w-[3px] bg-[#1890ff]" />}
-              <IconComponent className="h-4 w-4 shrink-0" />
-              {!isCollapsed && <span className="truncate">{item.name}</span>}
+              <Icon className="h-4 w-4" />
+              <span>{item.label}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="h-12 border-t border-[#dbe9f5] bg-[#f7fbff] flex items-center justify-center">
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="h-8 w-8 flex items-center justify-center rounded text-[#40566c] hover:bg-[#e1f1ff]"
-          aria-label={isCollapsed ? '展开侧边栏' : '收起侧边栏'}
-        >
-          {isCollapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </button>
-      </div>
+      {!isCollapsed && (
+        <div className="w-[144px] bg-[#fbfdff]">
+          <div className="h-[80px] flex flex-col items-center justify-center border-b border-[#edf2f7]">
+            <div className="relative h-9 w-[90px]">
+              <span className="absolute left-4 top-1 h-2 w-20 -skew-x-[28deg] bg-[#f2a400]" />
+              <span className="absolute left-2 top-3 h-2 w-16 -skew-x-[28deg] bg-[#1f92dc]" />
+              <span className="absolute left-12 top-1 h-2 w-12 -skew-x-[28deg] bg-[#22a6e8]" />
+              <span className="absolute left-5 top-5 text-[19px] font-black italic text-[#1d8bd0] tracking-[-1px]">Tiantu</span>
+            </div>
+            <div className="text-[10px] font-bold text-[#2f435a] tracking-[2px]">聚焦欧美 空海运专线</div>
+          </div>
+
+          <nav className="py-3 text-[#4b5d73]">
+            {groups.map((group) => (
+              <div key={group.title}>
+                <button className="h-[42px] w-full px-5 flex items-center gap-2 text-[13px] font-bold hover:bg-[#f0f6fd]">
+                  <ClipboardList className="h-4 w-4 text-[#71839b]" />
+                  <span>{group.title}</span>
+                  {group.children.length > 0 && <span className="ml-auto text-[#8a96a6]">⌄</span>}
+                </button>
+                {group.children.length > 0 && (
+                  <div className="py-1">
+                    {group.children.map((child) => (
+                      <button
+                        key={child.id}
+                        onClick={() => setCurrentTab(child.id)}
+                        className={`h-[38px] w-full pl-[56px] pr-3 text-left text-[13px] font-semibold ${currentTab === child.id ? 'bg-[#f2f2f2] text-[#0052b8]' : 'hover:bg-[#f5f8fc]'}`}
+                      >
+                        {child.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </nav>
+        </div>
+      )}
     </aside>
   );
 }
