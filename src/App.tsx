@@ -9,7 +9,7 @@ import AssistantBot from './components/AssistantBot';
 import InvoiceModal from './components/InvoiceModal';
 import { INITIAL_WAYBILLS } from './data';
 import { Waybill, FilterParams, WaybillStatus } from './types';
-import { ShieldCheck, Info, Package, RefreshCw, Layers } from 'lucide-react';
+import { Layers, Menu, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
@@ -194,7 +194,7 @@ export default function App() {
   });
 
   return (
-    <div className="flex h-screen bg-[#f3f4f6] font-sans overflow-hidden antialiased text-slate-800">
+    <div className="flex h-screen min-w-[1280px] bg-[#eef3f7] font-sans overflow-hidden antialiased text-[#263548]">
       {/* Sidebar panel */}
       <Sidebar 
         currentTab={currentTab} 
@@ -204,7 +204,7 @@ export default function App() {
       />
 
       {/* Main Core Space */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden h-screen bg-[#f8fafc]">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden h-screen bg-[#eef3f7]">
         {/* Top bar header */}
         <Topbar 
           onDirectOrder={() => {
@@ -214,38 +214,37 @@ export default function App() {
         />
 
         {/* Dynamic page tab header bar */}
-        <div className="h-10 bg-white border-b border-slate-200 px-4 flex items-center gap-1 shrink-0 select-none">
-          <div className="text-slate-400 font-bold px-1.5 cursor-default hover:text-slate-600 text-sm">☰</div>
-          <div className="text-slate-400 font-bold px-1.5 cursor-default hover:text-slate-600 text-sm">‹</div>
-          
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none h-full">
-            <button className="px-3.5 h-8 text-xs font-semibold rounded-md border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-700 flex items-center gap-1.5">
+        <div className="h-[40px] bg-white border-b border-[#edf0f5] px-4 flex items-center gap-2 shrink-0 select-none">
+          <button className="h-7 w-7 flex items-center justify-center text-[#425466] hover:bg-[#f3f6fa] rounded">
+            <Menu className="h-4 w-4" />
+          </button>
+          <button className="h-7 w-7 flex items-center justify-center text-[#425466] hover:bg-[#f3f6fa] rounded">
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none h-full">
+            <button className="px-3.5 h-7 text-[12px] font-semibold rounded-[2px] border border-[#dfe6ee] bg-white text-[#6b7788] hover:text-[#263548] flex items-center gap-1.5">
               预报下单 <span className="text-[10px] text-slate-400">×</span>
             </button>
-            <button className="px-3.5 h-8 text-xs font-semibold rounded-md border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-700 flex items-center gap-1.5">
-              预留仓 <span className="text-[10px] text-slate-400">×</span>
-            </button>
-            <button className={`px-4 h-8 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all ${
+            <button className={`px-4 h-7 text-[12px] font-bold rounded-[2px] flex items-center gap-1.5 transition-all ${
               currentTab === 'waybills'
-                ? 'bg-[#5c67f2] text-white shadow-sm'
-                : 'border border-slate-200 bg-slate-50 text-slate-500'
+                ? 'bg-[#1890ff] text-white shadow-sm'
+                : 'border border-[#dfe6ee] bg-white text-[#6b7788]'
             }`}>
-              业务运单监控 <span className="text-[10px] opacity-70">×</span>
+              运单 <span className="text-[10px] opacity-70">×</span>
             </button>
           </div>
-          
-          <div className="text-slate-400 font-bold px-2 ml-auto cursor-default hover:text-slate-600 text-sm">›</div>
         </div>
 
         {/* Dynamic View container */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-[12px] space-y-3">
           <AnimatePresence>
             {currentTab === 'waybills' ? (
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 15 }}
-                className="space-y-6"
+                className="space-y-3"
               >
                 {/* 1. Statistics Dashboard Panel */}
                 {showStats && (
@@ -290,9 +289,9 @@ export default function App() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white p-12 rounded-lg border border-slate-200 text-center space-y-4 select-none"
+                className="bg-white p-12 rounded-[4px] border border-[#dfe6ee] text-center space-y-4 select-none"
               >
-                <div className="w-16 h-16 rounded-full bg-slate-100 text-[#5c67f2] flex items-center justify-center mx-auto shadow-inner animate-pulse">
+                <div className="w-16 h-16 rounded-full bg-[#f2f8ff] text-[#1890ff] flex items-center justify-center mx-auto shadow-inner animate-pulse">
                   <Layers className="w-8 h-8" />
                 </div>
                 <div className="space-y-1.5">
@@ -304,7 +303,7 @@ export default function App() {
                 <div className="flex justify-center gap-3">
                   <button
                     onClick={() => setCurrentTab('waybills')}
-                    className="px-4 py-2 bg-[#5c67f2] hover:bg-[#4a55e0] text-white font-bold text-xs rounded transition-all shadow-xs cursor-pointer"
+                    className="px-4 py-2 bg-[#1890ff] hover:bg-[#087fe7] text-white font-bold text-xs rounded-[2px] transition-all shadow-xs cursor-pointer"
                   >
                     返回《业务运单》工作台
                   </button>

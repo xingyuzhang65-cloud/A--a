@@ -166,10 +166,13 @@ export default function WaybillTable({
     setSelectedIds([]);
   };
 
+  const toolbarButton = 'h-[32px] px-3 bg-[#1890ff] hover:bg-[#087fe7] text-white rounded-[2px] text-[12px] font-semibold flex items-center gap-1 cursor-pointer';
+  const plainButton = 'h-[32px] px-3 border border-[#dcdfe6] bg-white hover:bg-[#f7f9fc] text-[#344255] rounded-[2px] text-[12px] font-semibold cursor-pointer';
+
   return (
-    <div className="bg-white rounded-lg border border-[#e2e8f0] shadow-sm overflow-hidden select-none">
+    <div className="bg-white rounded-[4px] border border-[#e5e9f0] shadow-[0_2px_8px_rgba(31,45,61,0.08)] overflow-hidden select-none">
       {/* 1. Status Navigation Tabs */}
-      <div className="flex border-b border-slate-100 overflow-x-auto bg-slate-50/50">
+      <div className="flex h-[48px] items-end border-b border-[#edf0f5] overflow-x-auto bg-white px-2">
         {statusSpecs.map(spec => {
           const isActive = currentStatusTab === spec.statusKey;
           return (
@@ -179,10 +182,10 @@ export default function WaybillTable({
                 setCurrentStatusTab(spec.statusKey);
                 setCurrentPage(1);
               }}
-              className={`px-5 py-3.5 text-xs font-semibold cursor-pointer border-b-2 tracking-wide transition-all shrink-0 ${
+              className={`h-[48px] px-4 text-[12px] font-semibold cursor-pointer border-b-2 transition-all shrink-0 ${
                 isActive 
-                  ? 'border-[#5c67f2] text-[#5c67f2] bg-white font-bold' 
-                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/40'
+                  ? 'border-[#1890ff] text-[#1890ff] bg-white font-bold' 
+                  : 'border-transparent text-[#344255] hover:text-[#1890ff]'
               }`}
             >
               {getBaselineCountLabel(spec.statusKey)}
@@ -192,14 +195,14 @@ export default function WaybillTable({
       </div>
 
       {/* 2. Action Toolbar */}
-      <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white">
-        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+      <div className="px-3 py-[10px] border-b border-[#edf0f5] flex items-center justify-between gap-3 bg-white">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
           {/* Status Mass Actions dropdown */}
           <div className="relative group">
-            <button className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded text-xs font-semibold text-slate-700 flex items-center gap-1 cursor-pointer">
+            <button className={toolbarButton}>
               批量操作 ▾
             </button>
-            <div className="absolute left-0 mt-1.5 w-44 bg-white border border-slate-200 rounded shadow-lg hidden group-hover:block z-20">
+            <div className="absolute left-0 mt-1.5 w-44 bg-white border border-[#dfe6ee] rounded-[3px] shadow-lg hidden group-hover:block z-20">
               <div className="py-1">
                 <button
                   onClick={() => {
@@ -209,7 +212,7 @@ export default function WaybillTable({
                     }
                     setShowBulkTradeMode(true);
                   }}
-                  className="w-full text-left px-4 py-2 text-xs hover:bg-indigo-50 hover:text-[#5c67f2] text-slate-700"
+                  className="w-full text-left px-4 py-2 text-xs hover:bg-[#e6f4ff] hover:text-[#1890ff] text-[#344255]"
                 >
                   批量修改贸易方式
                 </button>
@@ -225,7 +228,7 @@ export default function WaybillTable({
               }
               setBulkRemarkType('client');
             }}
-            className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded text-xs text-slate-700 font-semibold cursor-pointer"
+            className={toolbarButton}
           >
             批量修改客户备注
           </button>
@@ -238,14 +241,14 @@ export default function WaybillTable({
               }
               setBulkRemarkType('internal');
             }}
-            className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded text-xs text-slate-700 font-semibold cursor-pointer"
+            className={toolbarButton}
           >
             批量修改内部备注
           </button>
 
           <button
             onClick={batchInvoice}
-            className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded text-xs text-slate-700 font-semibold cursor-pointer"
+            className={toolbarButton}
           >
             制作发票
           </button>
@@ -258,22 +261,22 @@ export default function WaybillTable({
               }
               alert(`🚢 已更新选定 ${selectedIds.length} 票运单的海外港口预计清关节点跟进！`);
             }}
-            className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded text-xs text-slate-700 font-semibold cursor-pointer"
+            className={toolbarButton}
           >
             更新运踪
           </button>
 
           <button
             onClick={onOpenStats}
-            className="px-3.5 py-1.5 bg-indigo-50 border border-indigo-200 text-[#5c67f2] hover:bg-indigo-100 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer"
+            className={toolbarButton}
           >
             <PackageCheck className="w-3.5 h-3.5" />
             查看数据统计
           </button>
         </div>
 
-        <div className="flex items-center gap-2shrink-0">
-          <button className="p-1.5 border border-slate-200 hover:bg-slate-50 rounded text-slate-500 hover:text-slate-700" title="高级表格配置">
+        <div className="flex items-center gap-2 shrink-0">
+          <button className="h-[32px] w-[32px] border border-[#1890ff] bg-[#1890ff] hover:bg-[#087fe7] rounded-[2px] text-white flex items-center justify-center" title="高级表格配置">
             <Settings className="w-4 h-4" />
           </button>
         </div>
@@ -281,13 +284,13 @@ export default function WaybillTable({
 
       {/* 3. Bulk Remark Dialog Panel */}
       {bulkRemarkType && (
-        <div className="p-4 bg-slate-50 border-b border-slate-150 flex items-center gap-4 animate-fadeIn">
+        <div className="p-3 bg-[#f7fbff] border-b border-[#edf0f5] flex items-center gap-4 animate-fadeIn">
           <div className="text-xs font-bold text-slate-700">
             批量录入{bulkRemarkType === 'client' ? '【客户备注】' : '【内部备注】'}:
           </div>
           <input
             type="text"
-            className="flex-1 max-w-md border border-slate-200 p-1.5 text-xs rounded bg-white"
+            className="h-[30px] flex-1 max-w-md border border-[#dcdfe6] px-2 text-xs rounded-[2px] bg-white"
             placeholder={`输入统一的 ${bulkRemarkType === 'client' ? '客户留言' : '操作备注'} 信息`}
             value={bulkRemarkVal}
             onChange={e => setBulkRemarkVal(e.target.value)}
@@ -295,7 +298,7 @@ export default function WaybillTable({
           <div className="flex items-center gap-2">
             <button
               onClick={handleApplyBulkRemarks}
-              className="px-3 py-1 bg-[#5c67f2] hover:bg-[#4a55e0] text-white text-xs font-semibold rounded cursor-pointer"
+              className="h-[30px] px-3 bg-[#1890ff] hover:bg-[#087fe7] text-white text-xs font-semibold rounded-[2px] cursor-pointer"
             >
               应用
             </button>
@@ -304,7 +307,7 @@ export default function WaybillTable({
                 setBulkRemarkType(null);
                 setBulkRemarkVal('');
               }}
-              className="px-3 py-1 border border-slate-200 bg-white text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer"
+              className="h-[30px] px-3 border border-[#dcdfe6] bg-white text-xs rounded-[2px] text-[#344255] hover:bg-[#f7f9fc] cursor-pointer"
             >
               取消
             </button>
@@ -314,12 +317,12 @@ export default function WaybillTable({
 
       {/* 3.1 Bulk Trade Mode Dialog Panel */}
       {showBulkTradeMode && (
-        <div className="p-4 bg-slate-50 border-b border-slate-150 flex items-center gap-4 animate-fadeIn">
+        <div className="p-3 bg-[#f7fbff] border-b border-[#edf0f5] flex items-center gap-4 animate-fadeIn">
           <div className="text-xs font-bold text-slate-700">
             批量修改【贸易方式】:
           </div>
           <select
-            className="border border-slate-200 p-1.5 text-xs rounded bg-white cursor-pointer"
+            className="h-[30px] border border-[#dcdfe6] px-2 text-xs rounded-[2px] bg-white cursor-pointer"
             defaultValue=""
             onChange={(e) => {
               if (!e.target.value) return;
@@ -337,7 +340,7 @@ export default function WaybillTable({
           </select>
           <button
             onClick={() => setShowBulkTradeMode(false)}
-            className="px-3 py-1 border border-slate-200 bg-white text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer"
+            className="h-[30px] px-3 border border-[#dcdfe6] bg-white text-xs rounded-[2px] text-[#344255] hover:bg-[#f7f9fc] cursor-pointer"
           >
             取消
           </button>
@@ -345,12 +348,12 @@ export default function WaybillTable({
       )}
 
       {/* 4. Table Core Area */}
-      <div className="w-full overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+      <div className="w-full overflow-x-auto max-h-[calc(100vh-360px)]">
+        <table className="w-full min-w-[1700px] text-left border-collapse">
           <thead>
-            <tr className="bg-slate-50 text-slate-600 border-b border-slate-100 text-xs font-bold whitespace-nowrap">
-              <th className="px-4 py-3 text-center font-mono text-slate-400 w-10">#</th>
-              <th className="px-3 py-3 text-center w-8">
+            <tr className="sticky top-0 z-10 bg-[#f7f8fa] text-[#4e5d70] border-b border-[#edf0f5] text-[12px] font-bold whitespace-nowrap">
+              <th className="px-3 py-2 text-center font-mono text-[#8a96a6] w-10 border-r border-[#edf0f5]">#</th>
+              <th className="px-3 py-2 text-center w-8 border-r border-[#edf0f5]">
                 <input
                   type="checkbox"
                   onChange={handleSelectAll}
@@ -358,44 +361,44 @@ export default function WaybillTable({
                     paginatedWaybills.length > 0 &&
                     paginatedWaybills.every(w => selectedIds.includes(w.id))
                   }
-                  className="rounded border-slate-300 focus:ring-[#5c67f2] accent-[#5c67f2] cursor-pointer"
+                  className="rounded border-[#cfd7e2] focus:ring-[#1890ff] accent-[#1890ff] cursor-pointer"
                 />
               </th>
               <th 
-                className="px-4 py-3 cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                className="px-3 py-2 cursor-pointer hover:bg-[#eef6ff] transition-colors select-none border-r border-[#edf0f5]"
                 onClick={() => handleSort('clientName')}
               >
                 客户简称 {sortField === 'clientName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}
               </th>
-              <th className="px-4 py-3">FBA单号</th>
-              <th className="px-4 py-3">运单号</th>
+              <th className="px-3 py-2 border-r border-[#edf0f5]">FBA单号</th>
+              <th className="px-3 py-2 border-r border-[#edf0f5]">运单号</th>
               <th 
-                className="px-4 py-3 cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                className="px-3 py-2 cursor-pointer hover:bg-[#eef6ff] transition-colors select-none border-r border-[#edf0f5]"
                 onClick={() => handleSort('destination')}
               >
                 目的地 {sortField === 'destination' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}
               </th>
-              <th className="px-4 py-3">报关方式</th>
-              <th className="px-4 py-3">贸易方式</th>
-              <th className="px-4 py-3">ETA</th>
-              <th className="px-4 py-3 min-w-[140px]">商品品名</th>
-              <th className="px-4 py-3">ETD</th>
-              <th className="px-4 py-3">船名航次</th>
-              <th className="px-4 py-3">申报总值</th>
-              <th className="px-4 py-3 text-center">附件</th>
-              <th className="px-4 py-3">异常类型</th>
-              <th className="px-4 py-3">快递商</th>
+              <th className="px-3 py-2 border-r border-[#edf0f5]">报关方式</th>
+              <th className="px-3 py-2 border-r border-[#edf0f5]">贸易方式</th>
+              <th className="px-3 py-2 border-r border-[#edf0f5]">ETA</th>
+              <th className="px-3 py-2 min-w-[140px] border-r border-[#edf0f5]">商品品名</th>
+              <th className="px-3 py-2 border-r border-[#edf0f5]">ETD</th>
+              <th className="px-3 py-2 border-r border-[#edf0f5]">船名航次</th>
+              <th className="px-3 py-2 border-r border-[#edf0f5]">申报总值</th>
+              <th className="px-3 py-2 text-center border-r border-[#edf0f5]">附件</th>
+              <th className="px-3 py-2 border-r border-[#edf0f5]">异常类型</th>
+              <th className="px-3 py-2 border-r border-[#edf0f5]">快递商</th>
               <th 
-                className="px-4 py-3 cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                className="px-3 py-2 cursor-pointer hover:bg-[#eef6ff] transition-colors select-none border-r border-[#edf0f5]"
                 onClick={() => handleSort('channel')}
               >
                 干线渠道 {sortField === 'channel' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}
               </th>
-              <th className="px-4 py-3">运单状态</th>
-              <th className="px-4 py-3 text-center">系统操作</th>
+              <th className="px-3 py-2 border-r border-[#edf0f5]">运单状态</th>
+              <th className="px-3 py-2 text-center">系统操作</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-[#edf0f5]">
             {paginatedWaybills.map((w, index) => {
               const isSelected = selectedIds.includes(w.id);
               const customIndex = (currentPage - 1) * pageSize + index + 1;
@@ -414,54 +417,54 @@ export default function WaybillTable({
               return (
                 <tr 
                   key={w.id} 
-                  className={`text-slate-700 text-xs hover:bg-slate-50/75 transition-all ${
-                    isSelected ? 'bg-indigo-50/20' : ''
+                  className={`text-[#596a7d] text-[12px] hover:bg-[#f8fbff] transition-all ${
+                    isSelected ? 'bg-[#e6f4ff]' : ''
                   }`}
                   onDoubleClick={() => onEdit(w)}
                 >
-                  <td className="px-4 py-3.5 text-center font-mono text-slate-400 font-medium">
+                  <td className="px-3 py-2.5 text-center font-mono text-[#8a96a6] font-medium border-r border-[#edf0f5]">
                     {customIndex}
                   </td>
-                  <td className="px-3 py-3.5 text-center">
+                  <td className="px-3 py-2.5 text-center border-r border-[#edf0f5]">
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={e => handleToggleSelect(w.id, e.target.checked)}
-                      className="rounded border-slate-300 focus:ring-[#5c67f2] accent-[#5c67f2] cursor-pointer"
+                      className="rounded border-[#cfd7e2] focus:ring-[#1890ff] accent-[#1890ff] cursor-pointer"
                     />
                   </td>
-                  <td className="px-4 py-3.5 font-semibold text-slate-900">{w.clientName}</td>
-                  <td className="px-4 py-3.5 font-mono text-xs text-slate-500">{w.fbaNo || '-'}</td>
-                  <td className="px-4 py-3.5 font-semibold text-indigo-600 font-mono tracking-wide">{w.waybillNo}</td>
-                  <td className="px-4 py-3.5">
-                    <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded font-mono text-xs border border-slate-200">
+                  <td className="px-3 py-2.5 font-semibold text-[#405166] border-r border-[#edf0f5]">{w.clientName}</td>
+                  <td className="px-3 py-2.5 font-mono text-xs text-[#64748b] border-r border-[#edf0f5]">{w.fbaNo || '-'}</td>
+                  <td className="px-3 py-2.5 font-semibold text-[#1890ff] font-mono tracking-wide border-r border-[#edf0f5]">{w.waybillNo}</td>
+                  <td className="px-3 py-2.5 border-r border-[#edf0f5]">
+                    <span className="font-bold text-[#405166] bg-[#f5f7fa] px-2 py-0.5 rounded-[2px] font-mono text-xs border border-[#e5e9f0]">
                       {w.destination}
                     </span>
                   </td>
-                  <td className="px-4 py-3.5">
+                  <td className="px-3 py-2.5 border-r border-[#edf0f5]">
                     <span className={`px-1.5 py-0.5 rounded text-[10px] ${
                       w.declarationType === '一般贸易' ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-slate-100 text-slate-600'
                     }`}>
                       {w.declarationType}
                     </span>
                   </td>
-                  <td className="px-4 py-3.5">
-                    <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-200 font-mono">
+                  <td className="px-3 py-2.5 border-r border-[#edf0f5]">
+                    <span className="px-1.5 py-0.5 rounded-[2px] text-[10px] bg-[#e6f4ff] text-[#1890ff] border border-[#bae0ff] font-mono">
                       {w.tradeMode || '-'}
                     </span>
                   </td>
-                  <td className="px-4 py-3.5 font-mono text-slate-500">{w.eta || '-'}</td>
-                  <td className="px-4 py-3.5 truncate max-w-[180px] font-sans antialiased text-slate-700" title={w.productName}>
+                  <td className="px-3 py-2.5 font-mono text-[#64748b] border-r border-[#edf0f5]">{w.eta || '-'}</td>
+                  <td className="px-3 py-2.5 truncate max-w-[180px] font-sans antialiased text-[#596a7d] border-r border-[#edf0f5]" title={w.productName}>
                     {w.productName}
                   </td>
-                  <td className="px-4 py-3.5 font-mono text-slate-500">{w.etd || '-'}</td>
-                  <td className="px-4 py-3.5 text-slate-600 text-[11px] truncate max-w-[120px]" title={w.vesselVoyage}>
+                  <td className="px-3 py-2.5 font-mono text-[#64748b] border-r border-[#edf0f5]">{w.etd || '-'}</td>
+                  <td className="px-3 py-2.5 text-[#64748b] text-[11px] truncate max-w-[120px] border-r border-[#edf0f5]" title={w.vesselVoyage}>
                     {w.vesselVoyage || '-'}
                   </td>
-                  <td className="px-4 py-3.5 font-mono text-emerald-600 font-bold">
+                  <td className="px-3 py-2.5 font-mono text-[#405166] font-semibold border-r border-[#edf0f5]">
                     ${w.declarationValue.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3.5 text-center">
+                  <td className="px-3 py-2.5 text-center border-r border-[#edf0f5]">
                     {w.attachments > 0 ? (
                       <span className="bg-slate-100 text-slate-600 text-[10px] font-bold rounded-full w-5 h-5 inline-flex items-center justify-center border border-slate-200">
                         {w.attachments}
@@ -470,9 +473,9 @@ export default function WaybillTable({
                       <span className="text-slate-300">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-3.5">
+                  <td className="px-3 py-2.5 border-r border-[#edf0f5]">
                     {hasIssue ? (
-                      <span className="flex items-center gap-1.5 text-amber-600 font-bold bg-amber-50 rounded px-1.5 py-0.5 border border-amber-200 animate-pulse text-[10px]">
+                      <span className="flex items-center gap-1.5 text-amber-600 font-bold bg-amber-50 rounded-[2px] px-1.5 py-0.5 border border-amber-200 text-[10px]">
                         <AlertTriangle className="w-3 h-3 shrink-0" />
                         {w.issueType}
                       </span>
@@ -480,14 +483,14 @@ export default function WaybillTable({
                       <span className="text-slate-400">无异常</span>
                     )}
                   </td>
-                  <td className="px-4 py-3.5 font-medium">{w.courierCompany}</td>
-                  <td className="px-4 py-3.5 text-slate-600 font-medium">{w.channel}</td>
-                  <td className="px-4 py-3.5">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${statusLabelStyle}`}>
+                  <td className="px-3 py-2.5 font-medium border-r border-[#edf0f5]">{w.courierCompany}</td>
+                  <td className="px-3 py-2.5 text-[#64748b] font-medium border-r border-[#edf0f5]">{w.channel}</td>
+                  <td className="px-3 py-2.5 border-r border-[#edf0f5]">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-[2px] text-[10px] font-bold ${statusLabelStyle}`}>
                       {w.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3.5 text-center shrink-0">
+                  <td className="px-3 py-2.5 text-center shrink-0">
                     <div className="flex items-center justify-center gap-1">
                       <button
                         onClick={() => setViewingWaybill(w)}
@@ -528,11 +531,11 @@ export default function WaybillTable({
       </div>
 
       {/* 5. Pagination Pager Footer */}
-      <footer className="h-16 px-5 border-t border-slate-100 flex items-center justify-between bg-slate-50 text-xs text-slate-500 select-none">
+      <footer className="h-[48px] px-4 border-t border-[#edf0f5] flex items-center justify-end gap-4 bg-white text-[12px] text-[#596a7d] select-none">
         <div className="flex items-center gap-5">
-          <span>共 <strong className="text-slate-800">{sortedWaybills.length}</strong> 条记录</span>
+          <span>共 <strong className="text-[#263548]">{sortedWaybills.length}</strong> 条记录</span>
           {selectedIds.length > 0 && (
-            <span className="text-[#5c67f2] font-semibold bg-[#5c67f2]/10 px-2.5 py-0.5 rounded-full">
+            <span className="text-[#1890ff] font-semibold bg-[#e6f4ff] px-2.5 py-0.5 rounded-full">
               已勾选 {selectedIds.length} 项
             </span>
           )}
@@ -543,19 +546,19 @@ export default function WaybillTable({
           <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="w-8 h-8 rounded border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-white cursor-pointer"
+            className="w-7 h-7 rounded-[2px] border border-[#dcdfe6] bg-white flex items-center justify-center text-[#596a7d] hover:bg-[#f7f9fc] disabled:opacity-40 disabled:hover:bg-white cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           
-          <span className="font-semibold text-slate-700">
+          <span className="font-semibold text-[#344255]">
             第 {currentPage} 页 / 共 {totalPages} 页
           </span>
 
           <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="w-8 h-8 rounded border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-white cursor-pointer"
+            className="w-7 h-7 rounded-[2px] border border-[#dcdfe6] bg-white flex items-center justify-center text-[#596a7d] hover:bg-[#f7f9fc] disabled:opacity-40 disabled:hover:bg-white cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -566,7 +569,7 @@ export default function WaybillTable({
               setPageSize(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="ml-3 px-2 py-1.5 border border-slate-200 rounded bg-white text-slate-600 focus:outline-none focus:ring-1 focus:ring-[#5c67f2] cursor-pointer"
+            className="ml-2 h-7 px-2 border border-[#dcdfe6] rounded-[2px] bg-white text-[#596a7d] focus:outline-none focus:ring-1 focus:ring-[#1890ff] cursor-pointer"
           >
             <option value={10}>10 条/页</option>
             <option value={20}>20 条/页</option>

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  FilePlus, Warehouse, FileText, ClipboardList, DollarSign, ShieldAlert, 
-  Headphones, Globe, Coins, FileCheck, Receipt, PackageMinus, Wallet, 
-  Wrench, ShoppingBag, Ruler, History, Box, Lock, ChevronDown, ChevronRight, Menu, ChevronLeft
+import {
+  FilePlus, Warehouse, FileText, ClipboardList, DollarSign, ShieldAlert,
+  Headphones, Globe, Coins, FileCheck, Receipt, PackageMinus, Wallet,
+  Wrench, ShoppingBag, Ruler, History, Box, Lock, ChevronDown, ChevronRight,
+  ChevronLeft, Menu
 } from 'lucide-react';
-import { motion } from 'motion/react';
 
 interface SidebarProps {
   currentTab: string;
@@ -34,9 +34,9 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
   const menuItems = [
     { name: '预报下单', icon: FilePlus, id: 'forecast-order' },
     { name: '未入仓运单', icon: Warehouse, id: 'unwarehoused' },
-    { 
-      name: '业务运单', 
-      icon: FileText, 
+    {
+      name: '业务运单',
+      icon: FileText,
       id: 'business-waybills',
       children: [
         { name: '运单', icon: ClipboardList, id: 'waybills' },
@@ -44,26 +44,26 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
       ]
     },
     { name: '扣货管理', icon: ShieldAlert, id: 'withheld-cargo' },
-    { 
-      name: '客服运单管理', 
-      icon: Headphones, 
+    {
+      name: '客服运单管理',
+      icon: Headphones,
       id: 'customer-service-mgmt',
       children: [
         { name: '问题件处理', icon: ShieldAlert, id: 'issue-mgmt' },
         { name: '退件管理', icon: PackageMinus, id: 'return-mgmt' }
       ]
     },
-    { 
-      name: '海外中转单', 
-      icon: Globe, 
+    {
+      name: '海外中转单',
+      icon: Globe,
       id: 'overseas-transit',
       children: [
         { name: '中转记录', icon: ClipboardList, id: 'transit-logs' }
       ]
     },
-    { 
-      name: '财务运单', 
-      icon: Coins, 
+    {
+      name: '财务运单',
+      icon: Coins,
       id: 'financial-waybills',
       children: [
         { name: '对账单管理', icon: FileCheck, id: 'statements' }
@@ -73,17 +73,17 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
     { name: '来款登记', icon: Receipt, id: 'receipt-matching' },
     { name: '出仓单', icon: PackageMinus, id: 'out-warehouse-doc' },
     { name: '客户余额', icon: Wallet, id: 'client-balances' },
-    { 
-      name: '工单', 
-      icon: Wrench, 
+    {
+      name: '工单',
+      icon: Wrench,
       id: 'work-orders',
       children: [
         { name: '我的工单', icon: Wrench, id: 'my-orders' }
       ]
     },
-    { 
-      name: '服务订单', 
-      icon: ShoppingBag, 
+    {
+      name: '服务订单',
+      icon: ShoppingBag,
       id: 'service-orders',
       children: [
         { name: '标签打印', icon: ClipboardList, id: 'label-print' }
@@ -91,9 +91,9 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
     },
     { name: '修改材积运单', icon: Ruler, id: 'modify-volume' },
     { name: '仓库费用日志', icon: History, id: 'warehouse-fees' },
-    { 
-      name: '货件管理', 
-      icon: Box, 
+    {
+      name: '货件管理',
+      icon: Box,
       id: 'cargo-mgmt',
       children: [
         { name: '装箱计划', icon: Box, id: 'packing-plan' }
@@ -103,80 +103,68 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
   ];
 
   return (
-    <aside 
-      className={`bg-[#1c2438] text-slate-300 flex flex-col transition-all duration-300 border-r border-[#2d3a5a] relative select-none h-screen ${
-        isCollapsed ? 'w-16' : 'w-64'
+    <aside
+      className={`relative z-10 flex h-screen flex-col border-r border-[#dbe9f5] bg-[#edf7ff] text-[#36485c] transition-all duration-200 select-none ${
+        isCollapsed ? 'w-[64px]' : 'w-[176px]'
       }`}
       id="ans-sidebar"
     >
-      {/* Brand logo */}
-      <div className="h-16 flex items-center px-4 bg-[#141b2d] border-b border-[#2d3a5a] overflow-hidden gap-3">
-        <div className="w-9 h-9 rounded bg-[#5c67f2] flex items-center justify-center text-white font-bold text-lg shrink-0">
-          A
+      <div className="h-[58px] flex items-center gap-2 px-4 bg-[#f7fbff] border-b border-[#dbe9f5] overflow-hidden">
+        <div className="relative h-8 w-10 shrink-0">
+          <span className="absolute left-0 top-4 h-2 w-7 -skew-x-12 bg-[#ff9f1a]" />
+          <span className="absolute left-4 top-2 h-2 w-7 -skew-x-12 bg-[#e73135]" />
         </div>
         {!isCollapsed && (
-          <motion.div 
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col"
-          >
-            <span className="text-white font-bold text-sm tracking-wider">ANSU</span>
-            <span className="text-xs text-slate-400">安速货运管理系统</span>
-          </motion.div>
+          <div className="leading-tight">
+            <div className="text-[15px] font-black text-[#e73135] tracking-tight">ANSU</div>
+            <div className="text-[10px] font-semibold text-[#7b8794] whitespace-nowrap">安速货运</div>
+          </div>
         )}
       </div>
 
-      {/* Navigation menu list */}
-      <div className="flex-1 overflow-y-auto py-3 space-y-1 scrollbar-thin scrollbar-thumb-slate-700">
-        {menuItems.map((item) => {
+      <div className="flex-1 overflow-y-auto py-2 sidebar-scroll">
+        {menuItems.map(item => {
           const IconComponent = item.icon;
           const isGroup = !!item.children;
           const isExpanded = expandedGroups[item.name];
+          const isGroupActive = currentTab === item.id || item.children?.some(child => child.id === currentTab);
 
           if (isGroup) {
             return (
-              <div key={item.id} className="space-y-1">
-                {/* Parent Group Button */}
+              <div key={item.id}>
                 <button
                   onClick={() => !isCollapsed && toggleGroup(item.name)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#232d48] rounded-md mx-2 ${
-                    isCollapsed ? 'justify-center w-12' : 'max-w-[240px]'
-                  } ${
-                    currentTab === item.id || item.children?.some(c => c.id === currentTab)
-                      ? 'bg-[#1f2842] text-[#6974f5]'
-                      : 'text-slate-300'
-                  }`}
                   title={item.name}
+                  className={`relative flex min-h-[40px] w-full items-center gap-2 px-5 text-[13px] font-semibold transition-colors ${
+                    isGroupActive ? 'text-[#1890ff]' : 'text-[#32465a] hover:bg-[#e1f1ff]'
+                  } ${isCollapsed ? 'justify-center px-0' : ''}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <IconComponent className="w-4.5 h-4.5 shrink-0" />
-                    {!isCollapsed && <span>{item.name}</span>}
-                  </div>
+                  {isGroupActive && <span className="absolute right-0 top-2 bottom-2 w-[3px] bg-[#1890ff]" />}
+                  <IconComponent className="h-4 w-4 shrink-0" />
+                  {!isCollapsed && <span className="truncate">{item.name}</span>}
                   {!isCollapsed && (
-                    <span className="text-slate-500">
-                      {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    <span className="ml-auto text-[#68788a]">
+                      {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                     </span>
                   )}
                 </button>
 
-                {/* Sub-menu items */}
                 {!isCollapsed && isExpanded && item.children && (
-                  <div className="pl-9 space-y-1">
-                    {item.children.map((child) => {
+                  <div className="py-1">
+                    {item.children.map(child => {
                       const ChildIcon = child.icon;
                       const isActiveChild = currentTab === child.id;
                       return (
                         <button
                           key={child.id}
                           onClick={() => setCurrentTab(child.id)}
-                          className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-medium rounded-md transition-colors hover:text-white ${
-                            isActiveChild 
-                              ? 'bg-[#5c67f2] text-white shadow-sm' 
-                              : 'text-slate-400 hover:bg-[#232d48]'
+                          className={`relative flex min-h-[36px] w-full items-center gap-2 pl-10 pr-3 text-[12px] font-semibold transition-colors ${
+                            isActiveChild ? 'bg-[#e6f4ff] text-[#1890ff]' : 'text-[#4e6074] hover:bg-[#e7f4ff]'
                           }`}
                         >
-                          <ChildIcon className="w-3.5 h-3.5 shrink-0" />
-                          <span>{child.name}</span>
+                          {isActiveChild && <span className="absolute right-0 top-1 bottom-1 w-[3px] bg-[#1890ff]" />}
+                          <ChildIcon className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{child.name}</span>
                         </button>
                       );
                     })}
@@ -186,36 +174,31 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
             );
           }
 
-          // Normal Item
           const isActive = currentTab === item.id;
           return (
             <button
               key={item.id}
               onClick={() => setCurrentTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#232d48] rounded-md mx-2 ${
-                isCollapsed ? 'justify-center w-12' : 'max-w-[240px]'
-              } ${
-                isActive 
-                  ? 'bg-[#5c67f2] text-white' 
-                  : 'text-slate-300'
-              }`}
               title={item.name}
+              className={`relative flex min-h-[40px] w-full items-center gap-2 px-5 text-[13px] font-semibold transition-colors ${
+                isActive ? 'bg-[#e6f4ff] text-[#1890ff]' : 'text-[#32465a] hover:bg-[#e1f1ff]'
+              } ${isCollapsed ? 'justify-center px-0' : ''}`}
             >
-              <IconComponent className="w-4.5 h-4.5 shrink-0" />
-              {!isCollapsed && <span>{item.name}</span>}
+              {isActive && <span className="absolute right-0 top-2 bottom-2 w-[3px] bg-[#1890ff]" />}
+              <IconComponent className="h-4 w-4 shrink-0" />
+              {!isCollapsed && <span className="truncate">{item.name}</span>}
             </button>
           );
         })}
       </div>
 
-      {/* Collapse control button */}
-      <div className="p-3 border-t border-[#2d3a5a] flex justify-center bg-[#141b2d]">
-        <button 
+      <div className="h-12 border-t border-[#dbe9f5] bg-[#f7fbff] flex items-center justify-center">
+        <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-8 h-8 rounded bg-[#1e273d] hover:bg-[#293553] text-slate-400 hover:text-white flex items-center justify-center focus:outline-none"
-          aria-label={isCollapsed ? "展开侧边栏" : "收起侧边栏"}
+          className="h-8 w-8 flex items-center justify-center rounded text-[#40566c] hover:bg-[#e1f1ff]"
+          aria-label={isCollapsed ? '展开侧边栏' : '收起侧边栏'}
         >
-          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          {isCollapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>
       </div>
     </aside>
