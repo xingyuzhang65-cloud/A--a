@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Waybill, WaybillStatus } from '../types';
 import { 
   Eye, Edit3, Trash2, CheckCircle, FileText, Settings, AlertTriangle, 
-  ChevronRight, ChevronLeft, PackageCheck, Info
+  ChevronRight, ChevronLeft, PackageCheck
 } from 'lucide-react';
 
 interface WaybillTableProps {
@@ -437,7 +437,7 @@ export default function WaybillTable({
                   className={`text-slate-700 text-xs hover:bg-slate-50/75 transition-all ${
                     isSelected ? 'bg-indigo-50/20' : ''
                   }`}
-                  onDoubleClick={() => onEdit(w)}
+                  onDoubleClick={() => setViewingWaybill(w)}
                 >
                   <td className="px-4 py-3.5 text-center font-mono text-slate-400 font-medium">
                     {customIndex}
@@ -648,21 +648,27 @@ export default function WaybillTable({
       {/* 6. Waybill Detailed Inspector Sidebar Sliding Panel */}
       {viewingWaybill && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex justify-end">
-          <div className="bg-white w-full max-w-xl shadow-2xl h-full flex flex-col">
-            <div className="h-16 px-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+          <div className="bg-[#f5f7fb] w-full lg:w-[68vw] lg:min-w-[860px] shadow-2xl h-full flex flex-col">
+            <div className="h-14 px-5 border-b border-slate-200 flex items-center justify-between bg-white">
               <div className="flex items-center gap-2">
-                <Info className="w-5 h-5 text-[#5c67f2]" />
-                <h3 className="font-bold text-slate-800 text-sm">安速全程物流运单卡片仪表</h3>
+                <button
+                  onClick={() => setViewingWaybill(null)}
+                  className="w-8 h-8 rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 flex items-center justify-center cursor-pointer text-xl leading-none"
+                  title="关闭"
+                >
+                  ×
+                </button>
+                <h3 className="font-semibold text-slate-800 text-base">查看({viewingWaybill.waybillNo})</h3>
               </div>
               <button
-                onClick={() => setViewingWaybill(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center cursor-pointer"
+                onClick={() => onEdit(viewingWaybill)}
+                className="px-3 py-1.5 rounded bg-[#004bb1] text-white text-xs font-semibold hover:bg-[#003b91] cursor-pointer"
               >
-                ✕
+                编辑
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+            <div className="flex-1 overflow-y-auto p-3 space-y-3">
               {/* Detailed specs */}
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-150 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-[#5c67f2]/5 rounded-bl-full flex items-center justify-center">
