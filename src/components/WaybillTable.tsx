@@ -54,6 +54,8 @@ export default function WaybillTable({
   const [showBulkTradeMode, setShowBulkTradeMode] = useState<boolean>(false);
   const [batchTradeMode, setBatchTradeMode] = useState<string>('');
   const [showBulkMenu, setShowBulkMenu] = useState<boolean>(false);
+  const [showDetailTradeModeModal, setShowDetailTradeModeModal] = useState<boolean>(false);
+  const [detailTradeModeDraft, setDetailTradeModeDraft] = useState<string>('');
   const bulkMenuRef = useRef<HTMLDivElement | null>(null);
   const tradeModeOptions = ['9610', '9710', '9810', '0110', '1039'];
 
@@ -212,10 +214,26 @@ export default function WaybillTable({
     return waybill?.waybillNo || id;
   });
 
-  const handleDetailTradeModeChange = (tradeMode: string) => {
-    if (!viewingWaybill || !tradeMode) return;
-    onBulkUpdateTradeMode([viewingWaybill.id], tradeMode);
-    setViewingWaybill({ ...viewingWaybill, tradeMode });
+  const openDetailTradeModeModal = () => {
+    if (!viewingWaybill) return;
+    setDetailTradeModeDraft(viewingWaybill.tradeMode || '');
+    setShowDetailTradeModeModal(true);
+  };
+
+  const confirmDetailTradeModeChange = () => {
+    if (!viewingWaybill || !detailTradeModeDraft) {
+      alert('请选择贸易方式');
+      return;
+    }
+
+    onBulkUpdateTradeMode([viewingWaybill.id], detailTradeModeDraft);
+    setViewingWaybill({ ...viewingWaybill, tradeMode: detailTradeModeDraft });
+    setShowDetailTradeModeModal(false);
+  };
+
+  const closeDetailView = () => {
+    setShowDetailTradeModeModal(false);
+    setViewingWaybill(null);
   };
 
   return (
@@ -658,7 +676,7 @@ export default function WaybillTable({
             <div className="flex h-[59px] shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-5">
               <button
                 type="button"
-                onClick={() => setViewingWaybill(null)}
+                onClick={closeDetailView}
                 className="flex h-8 w-8 items-center justify-center rounded text-2xl font-light leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                 title="关闭"
               >
@@ -699,18 +717,16 @@ export default function WaybillTable({
                   <div className="text-center"><span className="font-bold">结算重：</span></div>
                   <div className="text-center"><span className="font-bold">发票：</span><button className="text-blue-500 hover:text-blue-600">查看发票</button><button className="ml-3 text-blue-500 hover:text-blue-600">修改发票</button></div>
                   <div className="text-center"><span className="font-bold">报关方式：</span><strong>{viewingWaybill.declarationType || '-'}</strong></div>
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="text-center">
                     <span className="font-bold">贸易方式：</span>
-                    <select
-                      value={viewingWaybill.tradeMode || ''}
-                      onChange={(e) => handleDetailTradeModeChange(e.target.value)}
-                      className="h-7 rounded border border-slate-300 bg-white px-2 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    <strong>{viewingWaybill.tradeMode || '-'}</strong>
+                    <button
+                      type="button"
+                      onClick={openDetailTradeModeModal}
+                      className="ml-2 text-blue-500 hover:text-blue-600"
                     >
-                      <option value="">请选择贸易方式</option>
-                      {tradeModeOptions.map(option => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
+                      修改
+                    </button>
                   </div>
                   <div className="text-center"><span className="font-bold">交税方式：</span><strong>{viewingWaybill.taxPayment || '-'}</strong></div>
                   <div className="text-center"><span className="font-bold">申报价值：</span><strong>{viewingWaybill.declarationValue || '-'}</strong></div>
@@ -775,6 +791,53 @@ export default function WaybillTable({
                 </table>
               </section>
             </div>
+
+            {showDetailTradeModeModal && (
+              <div className="absolute inset-0 z-[80] flex items-start justify-center bg-black/20 pt-24">
+                <div className="w-[420px] rounded-sm bg-white shadow-2xl">
+                  <div className="border-b border-slate-200 px-5 py-4">
+                    <h3 className="text-base font-bold text-slate-900">修改贸易方式</h3>
+                  </div>
+                  <div className="space-y-4 px-7 py-5 text-xs">
+                    <div className="flex items-center gap-3">
+                      <span className="w-20 text-right text-slate-600">运单号：</span>
+                      <span className="font-semibold text-slate-700">{viewingWaybill.waybillNo}</span>
+                    </div>
+                    <label className="flex items-center gap-3">
+                      <span className="w-20 text-right text-slate-600">
+                        <span className="mr-0.5 text-red-500">*</span>贸易方式：
+                      </span>
+                      <select
+                        value={detailTradeModeDraft}
+                        onChange={(e) => setDetailTradeModeDraft(e.target.value)}
+                        className="h-9 flex-1 rounded border border-slate-300 bg-white px-3 text-xs text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="">请选择贸易方式</option>
+                        {tradeModeOptions.map(option => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowDetailTradeModeModal(false)}
+                      className="rounded border border-slate-300 bg-white px-5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                    >
+                      取消
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmDetailTradeModeChange}
+                      className="rounded bg-[#004bb1] px-5 py-1.5 text-xs font-bold text-white hover:bg-[#003b91]"
+                    >
+                      确定
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
