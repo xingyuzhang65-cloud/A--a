@@ -23,7 +23,7 @@ const initialFilters: FilterParams = {
   operator: '',
   trackingNo: '',
   declarationType: '全部',
-  tradeMode: '全部',
+  tradeMode: '',
   clientRemark: '',
   warehouseAttr: '',
   createTimeStart: '',
@@ -135,14 +135,14 @@ export default function FilterForm({ onSearch, onReset }: FilterFormProps) {
           </div>
 
           <div className="flex flex-col">
-            <label className="text-xs font-semibold text-slate-500 mb-1.5">标签</label>
+            <label className="text-xs font-semibold text-slate-500 mb-1.5">贸易方式</label>
             <input
               type="text"
-              name="label"
-              placeholder="危险品/高价值/重货"
-              value={filters.label}
+              name="tradeMode"
+              placeholder="9610/9710/9810/0110/1039"
+              value={filters.tradeMode}
               onChange={handleInputChange}
-              className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 placeholder:text-slate-400"
+              className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:ring-1 focus:ring-[#5c67f2]/20 focus:outline-none transition-all placeholder:text-slate-400 bg-slate-50 hover:bg-slate-50/50"
             />
           </div>
         </div>
@@ -211,20 +211,15 @@ export default function FilterForm({ onSearch, onReset }: FilterFormProps) {
                 </div>
 
                 <div className="flex flex-col">
-                  <label className="text-xs font-semibold text-slate-500 mb-1.5">贸易方式</label>
-                  <select
-                    name="tradeMode"
-                    value={filters.tradeMode}
+                  <label className="text-xs font-semibold text-slate-500 mb-1.5">标签</label>
+                  <input
+                    type="text"
+                    name="label"
+                    placeholder="危险品/高价值/重货"
+                    value={filters.label}
                     onChange={handleInputChange}
-                    className="px-2.5 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 cursor-pointer"
-                  >
-                    <option value="全部">全部贸易方式</option>
-                    <option value="9610">9610</option>
-                    <option value="9710">9710</option>
-                    <option value="9810">9810</option>
-                    <option value="0110">0110</option>
-                    <option value="1039">1039</option>
-                  </select>
+                    className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:outline-none bg-slate-50 placeholder:text-slate-400"
+                  />
                 </div>
 
                 <div className="flex flex-col">
