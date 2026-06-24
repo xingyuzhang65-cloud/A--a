@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FilterParams } from '../types';
 import { Search, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import MultiSelect from './MultiSelect';
 
 interface FilterFormProps {
   onSearch: (filters: FilterParams) => void;
@@ -23,7 +24,7 @@ const initialFilters: FilterParams = {
   operator: '',
   trackingNo: '',
   declarationType: '全部',
-  tradeMode: '',
+  tradeMode: [] as string[],
   clientRemark: '',
   warehouseAttr: '',
   createTimeStart: '',
@@ -136,13 +137,12 @@ export default function FilterForm({ onSearch, onReset }: FilterFormProps) {
 
           <div className="flex flex-col">
             <label className="text-xs font-semibold text-slate-500 mb-1.5">贸易方式</label>
-            <input
-              type="text"
+            <MultiSelect
               name="tradeMode"
-              placeholder="9610/9710/9810/0110/1039"
-              value={filters.tradeMode}
-              onChange={handleInputChange}
-              className="px-3 py-2 text-xs border border-slate-200 rounded focus:border-[#5c67f2] focus:ring-1 focus:ring-[#5c67f2]/20 focus:outline-none transition-all placeholder:text-slate-400 bg-slate-50 hover:bg-slate-50/50"
+              options={['9610', '9710', '9810', '0110', '1039']}
+              selected={filters.tradeMode}
+              onChange={(selected) => setFilters(prev => ({ ...prev, tradeMode: selected }))}
+              placeholder="全部贸易方式"
             />
           </div>
         </div>

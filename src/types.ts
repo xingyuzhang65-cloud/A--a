@@ -56,7 +56,7 @@ export interface FilterParams {
   operator: string;
   trackingNo: string;
   declarationType: string;
-  tradeMode: string;
+  tradeMode: string[];
   clientRemark: string;
   warehouseAttr: string;
   createTimeStart: string;

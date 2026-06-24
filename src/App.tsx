@@ -171,7 +171,7 @@ export default function App() {
     if (filterParams.operator && !w.operator.toLowerCase().includes(filterParams.operator.trim().toLowerCase())) return false;
     if (filterParams.trackingNo && !w.trackingNo.toLowerCase().includes(filterParams.trackingNo.trim().toLowerCase())) return false;
     if (filterParams.declarationType && filterParams.declarationType !== '全部' && w.declarationType !== filterParams.declarationType) return false;
-    if (filterParams.tradeMode && !w.tradeMode.toLowerCase().includes(filterParams.tradeMode.trim().toLowerCase())) return false;
+    if (filterParams.tradeMode.length > 0 && !filterParams.tradeMode.includes(w.tradeMode)) return false;
     if (filterParams.clientRemark && !w.clientRemark.toLowerCase().includes(filterParams.clientRemark.trim().toLowerCase())) return false;
     if (filterParams.fbaNo && !w.fbaNo.toLowerCase().includes(filterParams.fbaNo.trim().toLowerCase())) return false;
     if (filterParams.channel && !w.channel.toLowerCase().includes(filterParams.channel.trim().toLowerCase())) return false;
