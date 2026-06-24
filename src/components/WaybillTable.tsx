@@ -645,132 +645,116 @@ export default function WaybillTable({
         </div>
       )}
 
-      {/* 6. Waybill Detailed Inspector Sidebar Sliding Panel */}
+      {/* 6. Waybill Detailed View */}
       {viewingWaybill && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex justify-end">
-          <div className="bg-[#f5f7fb] w-full lg:w-[68vw] lg:min-w-[860px] shadow-2xl h-full flex flex-col">
-            <div className="h-14 px-5 border-b border-slate-200 flex items-center justify-between bg-white">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setViewingWaybill(null)}
-                  className="w-8 h-8 rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 flex items-center justify-center cursor-pointer text-xl leading-none"
-                  title="关闭"
-                >
-                  ×
-                </button>
-                <h3 className="font-semibold text-slate-800 text-base">查看({viewingWaybill.waybillNo})</h3>
-              </div>
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40">
+          <div className="flex h-full w-full flex-col bg-[#f3f6fb] shadow-2xl lg:w-[calc(100vw-600px)] lg:min-w-[960px]">
+            <div className="flex h-[59px] shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-5">
               <button
-                onClick={() => onEdit(viewingWaybill)}
-                className="px-3 py-1.5 rounded bg-[#004bb1] text-white text-xs font-semibold hover:bg-[#003b91] cursor-pointer"
-              >
-                编辑
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-3 space-y-3">
-              {/* Detailed specs */}
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-150 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-[#5c67f2]/5 rounded-bl-full flex items-center justify-center">
-                  <span className="text-3xl font-black text-[#5c67f2]/15">{viewingWaybill.destination}</span>
-                </div>
-                <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">主单追踪码</div>
-                <div className="text-base font-bold font-mono tracking-wide text-indigo-600 mb-1.5">{viewingWaybill.waybillNo}</div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 font-bold text-[10px] rounded bg-[#5c67f2] text-white">
-                    {viewingWaybill.status}
-                  </span>
-                  <span className="text-slate-500 font-medium">FBA: {viewingWaybill.fbaNo || '无'}</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-xs p-1">
-                <div>
-                  <span className="text-slate-400 block mb-0.5">客户简称</span>
-                  <strong className="text-slate-800 text-sm">{viewingWaybill.clientName}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">目的地 (FBA)</span>
-                  <strong className="text-slate-800 text-sm">{viewingWaybill.destination} ({viewingWaybill.zipCode || '-'})</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">申报中文品名</span>
-                  <strong className="text-slate-800">{viewingWaybill.productName}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">申报总货值</span>
-                  <strong className="text-slate-800 text-emerald-600 font-mono font-bold">${viewingWaybill.declarationValue.toLocaleString()}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">转单号/面单条码</span>
-                  <strong className="text-slate-800 font-mono text-[11px] select-all bg-slate-50 px-1 py-0.5 border border-slate-100 rounded">{viewingWaybill.trackingNo || '暂未生成'}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">海空关渠道</span>
-                  <strong className="text-slate-800">{viewingWaybill.channel}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">承运公司</span>
-                  <strong className="text-slate-800">{viewingWaybill.courierCompany}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">报关方式</span>
-                  <strong className="text-slate-800">{viewingWaybill.declarationType}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">贸易方式</span>
-                  <strong className="text-slate-800 font-mono">{viewingWaybill.tradeMode || '-'}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">预计开船/机日 (ETD)</span>
-                  <strong className="text-slate-800 font-mono">{viewingWaybill.etd || '-'}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">预计签收送达日 (ETA)</span>
-                  <strong className="text-slate-800 font-mono">{viewingWaybill.eta || '-'}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">下单建单日期</span>
-                  <strong className="text-slate-800 font-mono">{viewingWaybill.createTime}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">跟单员</span>
-                  <strong className="text-slate-800">{viewingWaybill.merchandiser}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">业务员</span>
-                  <strong className="text-slate-800">{viewingWaybill.salesman}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block mb-0.5">指派客服</span>
-                  <strong className="text-slate-800">{viewingWaybill.customerService}</strong>
-                </div>
-              </div>
-
-              <div className="border-t border-slate-100 pt-4 space-y-3.5 text-xs">
-                <div>
-                  <span className="text-slate-400 block mb-1">外置客户公开备注</span>
-                  <div className="bg-slate-50/50 p-2.5 rounded border border-slate-150 text-slate-650 min-h-[50px]">
-                    {viewingWaybill.clientRemark || <span className="text-slate-400 italic">空备注</span>}
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-slate-400 block mb-1">内部协同特约备注</span>
-                  <div className="bg-indigo-50/10 p-2.5 rounded border border-indigo-100 text-indigo-950 min-h-[50px]">
-                    {viewingWaybill.internalRemark || <span className="text-slate-400 italic">空备注</span>}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="h-16 px-6 border-t border-slate-100 flex items-center justify-end bg-slate-50 shrink-0">
-              <button
+                type="button"
                 onClick={() => setViewingWaybill(null)}
-                className="px-5 py-2 bg-slate-850 hover:bg-slate-700 text-white rounded text-xs font-semibold cursor-pointer"
+                className="flex h-8 w-8 items-center justify-center rounded text-2xl font-light leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                title="关闭"
               >
-                退出查看
+                ×
               </button>
+              <h3 className="text-lg font-normal text-slate-900">查看({viewingWaybill.waybillNo})</h3>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-3 py-3">
+              <section className="rounded-lg border border-slate-200 bg-white px-3 py-4 shadow-sm">
+                <h4 className="mb-5 text-sm font-bold text-slate-900">基础信息</h4>
+                <div className="grid grid-cols-3 gap-x-8 gap-y-[22px] text-[15px] leading-5 text-slate-900">
+                  <div className="text-center">
+                    <span className="font-bold text-orange-500">运单号：</span>
+                    <strong className="font-bold text-orange-500">{viewingWaybill.waybillNo}</strong>
+                  </div>
+                  <div className="text-center">
+                    <span className="font-bold text-orange-500">起运地：</span>
+                    <strong className="font-bold text-orange-500">{viewingWaybill.operator || '-'}</strong>
+                  </div>
+                  <div className="text-center">
+                    <span className="font-bold text-orange-500">运单类型：</span>
+                    <strong className="font-bold text-orange-500">{viewingWaybill.waybillType || '-'}</strong>
+                  </div>
+                  <div className="text-center"><span className="font-bold">客户简称：</span><strong>{viewingWaybill.clientName || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">业务员：</span><strong>{viewingWaybill.salesman || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">跟单员：</span><strong>{viewingWaybill.merchandiser || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">目的地：</span><strong>{viewingWaybill.destination || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">渠道：</span><strong>{viewingWaybill.channel || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">仓库代码：</span><strong>{viewingWaybill.warehouseCode || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">品名：</span><strong>{viewingWaybill.productName || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">材质：</span><strong>{viewingWaybill.label || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">邮编：</span><strong>{viewingWaybill.zipCode || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">实重：</span></div>
+                  <div className="text-center"><span className="font-bold">材积重：</span></div>
+                  <div className="text-center"><span className="font-bold">件数：</span><strong>{viewingWaybill.attachments || 1}</strong> <button className="ml-2 text-blue-500 hover:text-blue-600">修改</button></div>
+                  <div className="text-center"><span className="font-bold">方数：</span></div>
+                  <div className="text-center"><span className="font-bold">结算重：</span></div>
+                  <div className="text-center"><span className="font-bold">发票：</span><button className="text-blue-500 hover:text-blue-600">查看发票</button><button className="ml-3 text-blue-500 hover:text-blue-600">修改发票</button></div>
+                  <div className="text-center"><span className="font-bold">报关方式：</span><strong>{viewingWaybill.declarationType || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">交税方式：</span><strong>{viewingWaybill.taxPayment || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">申报价值：</span><strong>{viewingWaybill.declarationValue || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">收件人：</span><strong>{viewingWaybill.warehouseCode || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">收件人电话：</span><strong>{viewingWaybill.trackingNo || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">收件人邮箱：</span></div>
+                  <div className="text-center"><span className="font-bold">币种：</span><strong>USD</strong></div>
+                  <div className="text-center"><span className="font-bold">客户备注：</span><strong>{viewingWaybill.clientRemark || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">内部备注：</span><strong>{viewingWaybill.internalRemark || '-'}</strong></div>
+                  <div className="text-center"><span className="font-bold">私人地址类型：</span></div>
+                  <div className="text-center"><span className="font-bold">预计送达周：</span></div>
+                  <div className="text-center"><span className="font-bold">是否购买退运保：</span><strong>{viewingWaybill.hasInsurance || '否'}</strong></div>
+                  <div><span className="font-bold">是否购买国内查验宝：</span><strong>否</strong></div>
+                </div>
+              </section>
+
+              <section className="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-4 shadow-sm">
+                <div className="mb-3 flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-slate-900">材积明细</h4>
+                    <span className="font-bold text-slate-900">客户可见:</span>
+                    <span className="inline-flex h-6 w-12 items-center rounded-full bg-blue-500 px-1 text-xs font-bold text-white">
+                      开
+                      <span className="ml-auto h-5 w-5 rounded-full bg-white"></span>
+                    </span>
+                  </div>
+                  <strong className="font-bold text-slate-900">总结算重: 0</strong>
+                </div>
+                <table className="w-full table-fixed border-collapse text-xs text-slate-700">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="w-14 border border-slate-200 px-3 py-2 text-left">#</th>
+                      <th className="w-[270px] border border-slate-200 px-3 py-2 text-left">系统箱号</th>
+                      <th className="border border-slate-200 px-3 py-2 text-left">长</th>
+                      <th className="border border-slate-200 px-3 py-2 text-left">宽</th>
+                      <th className="border border-slate-200 px-3 py-2 text-left">高</th>
+                      <th className="border border-slate-200 px-3 py-2 text-left">实重</th>
+                      <th className="border border-slate-200 px-3 py-2 text-left">材积重</th>
+                      <th className="border border-slate-200 px-3 py-2 text-left">周长</th>
+                      <th className="w-[230px] border border-slate-200 px-3 py-2 text-left">换货图片</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="h-[50px]">
+                      <td className="border border-slate-200 px-3 py-2">1</td>
+                      <td className="border border-slate-200 px-3 py-2 font-mono leading-6 text-slate-600">
+                        {viewingWaybill.fbaNo || viewingWaybill.waybillNo}U000001<br />
+                        {viewingWaybill.waybillNo}U000001
+                      </td>
+                      <td className="border border-slate-200 px-3 py-2"></td>
+                      <td className="border border-slate-200 px-3 py-2"></td>
+                      <td className="border border-slate-200 px-3 py-2"></td>
+                      <td className="border border-slate-200 px-3 py-2"></td>
+                      <td className="border border-slate-200 px-3 py-2"></td>
+                      <td className="border border-slate-200 px-3 py-2"></td>
+                      <td className="border border-slate-200 px-3 py-2"></td>
+                    </tr>
+                    <tr>
+                      <td className="h-[145px] border border-slate-200 px-3 py-2" colSpan={9}></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
             </div>
           </div>
         </div>
