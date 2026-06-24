@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Waybill, WaybillStatus } from '../types';
 import { 
   Eye, Edit3, Trash2, CheckCircle, FileText, Settings, AlertTriangle, 
@@ -52,6 +52,19 @@ export default function WaybillTable({
   const [bulkRemarkType, setBulkRemarkType] = useState<'client' | 'internal' | null>(null);
   const [bulkRemarkVal, setBulkRemarkVal] = useState<string>('');
   const [showBulkTradeMode, setShowBulkTradeMode] = useState<boolean>(false);
+  const [showBulkMenu, setShowBulkMenu] = useState<boolean>(false);
+  const bulkMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!bulkMenuRef.current?.contains(event.target as Node)) {
+        setShowBulkMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Status options with baseline numbers merged with live ones for realistic UI representation
   const statusSpecs: { label: string; statusKey: string }[] = [
@@ -195,14 +208,20 @@ export default function WaybillTable({
       <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white">
         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           {/* Status Mass Actions dropdown */}
-          <div className="relative group">
-            <button className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded text-xs font-semibold text-slate-700 flex items-center gap-1 cursor-pointer">
+          <div className="relative" ref={bulkMenuRef}>
+            <button
+              type="button"
+              onClick={() => setShowBulkMenu(prev => !prev)}
+              className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded text-xs font-semibold text-slate-700 flex items-center gap-1 cursor-pointer"
+            >
               批量操作 ▾
             </button>
-            <div className="absolute left-0 mt-1.5 w-44 bg-white border border-slate-200 rounded shadow-lg hidden group-hover:block z-20">
+            <div className={`absolute left-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded shadow-lg z-30 ${showBulkMenu ? 'block' : 'hidden'}`}>
               <div className="py-1">
                 <button
+                  type="button"
                   onClick={() => {
+                    setShowBulkMenu(false);
                     if (selectedIds.length === 0) {
                       alert('请先勾选需要修改贸易方式的运单！');
                       return;
