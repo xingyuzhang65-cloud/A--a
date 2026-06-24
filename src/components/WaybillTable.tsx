@@ -207,6 +207,11 @@ export default function WaybillTable({
     setShowBulkMenu(false);
   };
 
+  const selectedWaybillNos = selectedIds.map(id => {
+    const waybill = waybills.find(item => item.id === id);
+    return waybill?.waybillNo || id;
+  });
+
   return (
     <div className="bg-white rounded-lg border border-[#e2e8f0] shadow-sm overflow-hidden select-none">
       {/* 1. Status Navigation Tabs */}
@@ -601,7 +606,7 @@ export default function WaybillTable({
               <div className="flex items-center gap-3">
                 <span className="w-20 text-right text-slate-600">运单号：</span>
                 <span className="font-semibold text-slate-700">
-                  {selectedIds.length > 2 ? `${selectedIds.slice(0, 2).join('、')} 等 ${selectedIds.length} 单` : selectedIds.join('、')}
+                  {selectedWaybillNos.length > 2 ? `${selectedWaybillNos.slice(0, 2).join('、')} 等 ${selectedWaybillNos.length} 单` : selectedWaybillNos.join('、')}
                 </span>
               </div>
               <label className="flex items-center gap-3">
