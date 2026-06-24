@@ -212,6 +212,12 @@ export default function WaybillTable({
     return waybill?.waybillNo || id;
   });
 
+  const handleDetailTradeModeChange = (tradeMode: string) => {
+    if (!viewingWaybill || !tradeMode) return;
+    onBulkUpdateTradeMode([viewingWaybill.id], tradeMode);
+    setViewingWaybill({ ...viewingWaybill, tradeMode });
+  };
+
   return (
     <div className="bg-white rounded-lg border border-[#e2e8f0] shadow-sm overflow-hidden select-none">
       {/* 1. Status Navigation Tabs */}
@@ -693,6 +699,19 @@ export default function WaybillTable({
                   <div className="text-center"><span className="font-bold">结算重：</span></div>
                   <div className="text-center"><span className="font-bold">发票：</span><button className="text-blue-500 hover:text-blue-600">查看发票</button><button className="ml-3 text-blue-500 hover:text-blue-600">修改发票</button></div>
                   <div className="text-center"><span className="font-bold">报关方式：</span><strong>{viewingWaybill.declarationType || '-'}</strong></div>
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="font-bold">贸易方式：</span>
+                    <select
+                      value={viewingWaybill.tradeMode || ''}
+                      onChange={(e) => handleDetailTradeModeChange(e.target.value)}
+                      className="h-7 rounded border border-slate-300 bg-white px-2 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="">请选择贸易方式</option>
+                      {tradeModeOptions.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="text-center"><span className="font-bold">交税方式：</span><strong>{viewingWaybill.taxPayment || '-'}</strong></div>
                   <div className="text-center"><span className="font-bold">申报价值：</span><strong>{viewingWaybill.declarationValue || '-'}</strong></div>
                   <div className="text-center"><span className="font-bold">收件人：</span><strong>{viewingWaybill.warehouseCode || '-'}</strong></div>
