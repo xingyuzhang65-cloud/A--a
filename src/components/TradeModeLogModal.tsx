@@ -12,6 +12,52 @@ export interface TradeModeLogEntry {
 }
 
 const STORAGE_KEY = 'ans_trade_mode_logs';
+const SEEDED_FLAG = 'ans_trade_mode_logs_seeded';
+
+export function seedTradeModeLogs() {
+  if (localStorage.getItem(SEEDED_FLAG)) return;
+  localStorage.setItem(SEEDED_FLAG, '1');
+
+  const seedData: TradeModeLogEntry[] = [
+    // wb-001: 飞洋电商 LED灯 — 0110 → 9610
+    { waybillId: 'wb-001', waybillNo: 'ANSU2026060101', from: '无', to: '0110', timestamp: '2026-06-15 10:22:18', operator: '张华' },
+    { waybillId: 'wb-001', waybillNo: 'ANSU2026060101', from: '0110', to: '9610', timestamp: '2026-06-16 14:05:33', operator: '陈静' },
+
+    // wb-002: 智创科技 扫地机器人 — 9810 → 9710
+    { waybillId: 'wb-002', waybillNo: 'ANSU2026060102', from: '无', to: '9810', timestamp: '2026-06-16 09:15:44', operator: '李明' },
+    { waybillId: 'wb-002', waybillNo: 'ANSU2026060102', from: '9810', to: '9710', timestamp: '2026-06-17 16:30:07', operator: '王涛' },
+
+    // wb-003: 浩宇外贸 床单 — 1039 → 9810
+    { waybillId: 'wb-003', waybillNo: 'ANSU2026060103', from: '无', to: '1039', timestamp: '2026-06-14 11:08:52', operator: '王晶' },
+    { waybillId: 'wb-003', waybillNo: 'ANSU2026060103', from: '1039', to: '9810', timestamp: '2026-06-18 08:45:21', operator: '赵磊' },
+
+    // wb-004: 云想服饰 连衣裙 — 无 → 0110 (单一变更)
+    { waybillId: 'wb-004', waybillNo: 'ANSU2026060104', from: '无', to: '0110', timestamp: '2026-06-12 15:33:10', operator: '张华' },
+
+    // wb-006: 嘉诚数码 蓝牙音箱 — 9710 → 9610
+    { waybillId: 'wb-006', waybillNo: 'ANSU2026060106', from: '无', to: '9710', timestamp: '2026-06-08 10:12:05', operator: '张华' },
+    { waybillId: 'wb-006', waybillNo: 'ANSU2026060106', from: '9710', to: '9610', timestamp: '2026-06-09 13:47:39', operator: '王涛' },
+
+    // wb-008: 凯旋玩具 磁力片 — 9610 → 9810 (多次反复变更)
+    { waybillId: 'wb-008', waybillNo: 'ANSU2026060108', from: '无', to: '9610', timestamp: '2026-06-05 09:30:22', operator: '王晶' },
+    { waybillId: 'wb-008', waybillNo: 'ANSU2026060108', from: '9610', to: '9710', timestamp: '2026-06-06 11:15:48', operator: '孙洋' },
+    { waybillId: 'wb-008', waybillNo: 'ANSU2026060108', from: '9710', to: '9810', timestamp: '2026-06-07 17:02:33', operator: '陈静' },
+
+    // wb-005: 恒通货运 露营椅 — 9610 → 1039
+    { waybillId: 'wb-005', waybillNo: 'ANSU2026060105', from: '无', to: '9610', timestamp: '2026-06-10 08:50:11', operator: '李明' },
+    { waybillId: 'wb-005', waybillNo: 'ANSU2026060105', from: '9610', to: '1039', timestamp: '2026-06-12 10:28:56', operator: '孙洋' },
+
+    // wb-009: 飞洋电商 自行车模型 — 1039 → 0110
+    { waybillId: 'wb-009', waybillNo: 'ANSU2026060109', from: '无', to: '1039', timestamp: '2026-06-15 13:18:40', operator: '张华' },
+    { waybillId: 'wb-009', waybillNo: 'ANSU2026060109', from: '1039', to: '0110', timestamp: '2026-06-17 09:55:27', operator: '陈静' },
+
+    // wb-011: 智创科技 额温枪 — 0110 → 9610
+    { waybillId: 'wb-011', waybillNo: 'ANSU2026060111', from: '无', to: '0110', timestamp: '2026-06-13 14:22:08', operator: '李明' },
+    { waybillId: 'wb-011', waybillNo: 'ANSU2026060111', from: '0110', to: '9610', timestamp: '2026-06-15 11:36:19', operator: '王涛' },
+  ];
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(seedData));
+}
 
 export function getTradeModeLogs(): TradeModeLogEntry[] {
   try {

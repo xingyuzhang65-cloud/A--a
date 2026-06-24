@@ -11,7 +11,7 @@ import { INITIAL_WAYBILLS } from './data';
 import { Waybill, FilterParams, WaybillStatus } from './types';
 import { ShieldCheck, Info, Package, RefreshCw, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { appendTradeModeLog } from './components/TradeModeLogModal';
+import { appendTradeModeLog, seedTradeModeLogs } from './components/TradeModeLogModal';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<string>('waybills');
@@ -31,6 +31,9 @@ export default function App() {
 
   // Initialize and load dataset
   useEffect(() => {
+    // Seed historical trade mode change logs
+    seedTradeModeLogs();
+
     const saved = localStorage.getItem('ans_waybills');
     if (saved) {
       try {
