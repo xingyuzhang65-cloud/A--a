@@ -11,6 +11,7 @@ import { INITIAL_WAYBILLS } from './data';
 import { Waybill, FilterParams, WaybillStatus } from './types';
 import { ShieldCheck, Info, Package, RefreshCw, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { appendTradeModeLog } from './components/TradeModeLogModal';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<string>('waybills');
@@ -121,8 +122,22 @@ export default function App() {
 
   // Bulk trade mode update
   const handleBulkUpdateTradeMode = (ids: string[], tradeMode: string) => {
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
     const updated = waybills.map(w => {
       if (ids.includes(w.id)) {
+        // Record trade mode change log
+        if (w.tradeMode !== tradeMode) {
+          appendTradeModeLog({
+            waybillId: w.id,
+            waybillNo: w.waybillNo,
+            from: w.tradeMode || '无',
+            to: tradeMode,
+            timestamp,
+            operator: '安速操作员'
+          });
+        }
         return { ...w, tradeMode };
       }
       return w;
