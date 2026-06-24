@@ -52,8 +52,10 @@ export default function WaybillTable({
   const [bulkRemarkType, setBulkRemarkType] = useState<'client' | 'internal' | null>(null);
   const [bulkRemarkVal, setBulkRemarkVal] = useState<string>('');
   const [showBulkTradeMode, setShowBulkTradeMode] = useState<boolean>(false);
+  const [batchTradeMode, setBatchTradeMode] = useState<string>('');
   const [showBulkMenu, setShowBulkMenu] = useState<boolean>(false);
   const bulkMenuRef = useRef<HTMLDivElement | null>(null);
+  const tradeModeOptions = ['9610', '9710', '9810', '0110', '1039'];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -179,6 +181,32 @@ export default function WaybillTable({
     setSelectedIds([]);
   };
 
+  const handleBatchTradeModeUpdate = (nextTradeMode = batchTradeMode) => {
+    if (selectedIds.length === 0) {
+      alert('请在下方列表中勾选目标运单进行批量操作！');
+      return;
+    }
+
+    if (!nextTradeMode) {
+      alert('请选择要批量修改的贸易方式');
+      return;
+    }
+
+    const selectedWaybills = waybills.filter(item => selectedIds.includes(item.id));
+    const unsupportedWaybills = selectedWaybills.filter(item => item.declarationType === '托管报关');
+
+    if (unsupportedWaybills.length > 0) {
+      const blockedText = unsupportedWaybills.map(item => `[${item.waybillNo || item.id}]`).join('、');
+      alert(`${blockedText} 报关方式不支持该贸易方式`);
+      return;
+    }
+
+    onBulkUpdateTradeMode(selectedIds, nextTradeMode);
+    setBatchTradeMode(nextTradeMode);
+    setShowBulkTradeMode(false);
+    setShowBulkMenu(false);
+  };
+
   return (
     <div className="bg-white rounded-lg border border-[#e2e8f0] shadow-sm overflow-hidden select-none">
       {/* 1. Status Navigation Tabs */}
@@ -221,11 +249,11 @@ export default function WaybillTable({
                 <button
                   type="button"
                   onClick={() => {
-                    setShowBulkMenu(false);
                     if (selectedIds.length === 0) {
-                      alert('请先勾选需要修改贸易方式的运单！');
+                      alert('请在下方列表中勾选目标运单进行批量操作！');
                       return;
                     }
+                    setShowBulkMenu(false);
                     setShowBulkTradeMode(true);
                   }}
                   className="w-full text-left px-4 py-2 text-xs hover:bg-indigo-50 hover:text-[#5c67f2] text-slate-700"
@@ -328,38 +356,6 @@ export default function WaybillTable({
               取消
             </button>
           </div>
-        </div>
-      )}
-
-      {/* 3.1 Bulk Trade Mode Dialog Panel */}
-      {showBulkTradeMode && (
-        <div className="p-4 bg-slate-50 border-b border-slate-150 flex items-center gap-4 animate-fadeIn">
-          <div className="text-xs font-bold text-slate-700">
-            批量修改【贸易方式】:
-          </div>
-          <select
-            className="border border-slate-200 p-1.5 text-xs rounded bg-white cursor-pointer"
-            defaultValue=""
-            onChange={(e) => {
-              if (!e.target.value) return;
-              onBulkUpdateTradeMode(selectedIds, e.target.value);
-              setShowBulkTradeMode(false);
-              setSelectedIds([]);
-            }}
-          >
-            <option value="" disabled>请选择贸易方式</option>
-            <option value="9610">9610</option>
-            <option value="9710">9710</option>
-            <option value="9810">9810</option>
-            <option value="0110">0110</option>
-            <option value="1039">1039</option>
-          </select>
-          <button
-            onClick={() => setShowBulkTradeMode(false)}
-            className="px-3 py-1 border border-slate-200 bg-white text-xs rounded text-slate-600 hover:bg-slate-50 cursor-pointer"
-          >
-            取消
-          </button>
         </div>
       )}
 
@@ -594,6 +590,55 @@ export default function WaybillTable({
           </select>
         </div>
       </footer>
+
+      {showBulkTradeMode && (
+        <div className="fixed inset-0 z-[70] flex items-start justify-center bg-slate-950/50 pt-16">
+          <div className="w-[520px] rounded-sm bg-white shadow-2xl">
+            <div className="border-b border-slate-200 px-5 py-4">
+              <h3 className="text-base font-bold text-slate-900">批量修改贸易方式</h3>
+            </div>
+            <div className="space-y-4 px-7 py-5 text-xs">
+              <div className="flex items-center gap-3">
+                <span className="w-20 text-right text-slate-600">运单号：</span>
+                <span className="font-semibold text-slate-700">
+                  {selectedIds.length > 2 ? `${selectedIds.slice(0, 2).join('、')} 等 ${selectedIds.length} 单` : selectedIds.join('、')}
+                </span>
+              </div>
+              <label className="flex items-center gap-3">
+                <span className="w-20 text-right text-slate-600">
+                  <span className="mr-0.5 text-red-500">*</span>贸易方式：
+                </span>
+                <select
+                  value={batchTradeMode}
+                  onChange={(e) => setBatchTradeMode(e.target.value)}
+                  className="h-9 flex-1 rounded border border-slate-300 bg-white px-3 text-xs text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">请选择贸易方式</option>
+                  {tradeModeOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setShowBulkTradeMode(false)}
+                className="rounded border border-slate-300 bg-white px-5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBatchTradeModeUpdate()}
+                className="rounded bg-[#004bb1] px-5 py-1.5 text-xs font-bold text-white hover:bg-[#003b91]"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 6. Waybill Detailed Inspector Sidebar Sliding Panel */}
       {viewingWaybill && (
