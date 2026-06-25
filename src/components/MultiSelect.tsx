@@ -88,7 +88,27 @@ export default function MultiSelect({
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-md shadow-lg py-1 max-h-48 overflow-y-auto">
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-md shadow-lg py-1 max-h-60 overflow-y-auto">
+          {/* 全选 / 取消全选 */}
+          <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-[#5c67f2] font-semibold border-b border-slate-100">
+            <input
+              type="checkbox"
+              checked={selected.length === options.length}
+              ref={(el) => { if (el) el.indeterminate = selected.length > 0 && selected.length < options.length; }}
+              onChange={() => {
+                if (selected.length === options.length) {
+                  onChange([]);
+                } else {
+                  onChange([...options]);
+                }
+              }}
+              className="w-3.5 h-3.5 rounded border-slate-300 text-[#5c67f2] focus:ring-[#5c67f2]/30 accent-[#5c67f2] cursor-pointer"
+            />
+            <span>全选</span>
+            {selected.length > 0 && (
+              <span className="ml-auto text-[10px] text-slate-400">{selected.length}/{options.length}</span>
+            )}
+          </label>
           {options.map(opt => (
             <label
               key={opt}

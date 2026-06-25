@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, User, Clock, Terminal, Check } from 'lucide-react';
+import { Bell, User, Clock, Terminal, Check, UserPlus } from 'lucide-react';
 
 interface TopbarProps {
   onDirectOrder: () => void;
+  onAddUser: () => void;
+  onNavChange: (nav: string) => void;
+  activeNav: string;
 }
 
-export default function Topbar({ onDirectOrder }: TopbarProps) {
+export default function Topbar({ onDirectOrder, onAddUser, onNavChange, activeNav }: TopbarProps) {
   const [systime, setSystime] = useState<string>('');
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
 
@@ -28,25 +31,53 @@ export default function Topbar({ onDirectOrder }: TopbarProps) {
     <header className="h-16 bg-[#1e293b] border-b border-slate-700 flex items-center justify-between px-6 select-none shrink-0 text-slate-200">
       {/* Module selector tabs */}
       <div className="flex items-center gap-1.5 h-full overflow-x-auto scrollbar-none">
-        <button className="px-3.5 py-2 rounded text-xs font-bold text-white bg-[#5c67f2] transition-all shrink-0 cursor-pointer">
+        <button
+          onClick={() => onNavChange('waybill-manage')}
+          className={`px-3.5 py-2 rounded text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            activeNav === 'waybill-manage' ? 'text-white bg-[#5c67f2]' : 'text-slate-300 hover:text-white hover:bg-slate-800 font-semibold'
+          }`}>
           运单管理
         </button>
-        <button className="px-3.5 py-2 rounded text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all shrink-0 cursor-pointer">
+        <button
+          onClick={() => onNavChange('finance-manage')}
+          className={`px-3.5 py-2 rounded text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            activeNav === 'finance-manage' ? 'text-white bg-[#5c67f2]' : 'text-slate-300 hover:text-white hover:bg-slate-800 font-semibold'
+          }`}>
           财务管理
         </button>
-        <button className="px-3.5 py-2 rounded text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all shrink-0 cursor-pointer">
+        <button
+          onClick={() => onNavChange('admin-center')}
+          className={`px-3.5 py-2 rounded text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            activeNav === 'admin-center' ? 'text-white bg-[#5c67f2]' : 'text-slate-300 hover:text-white hover:bg-slate-800 font-semibold'
+          }`}>
           管理中心
         </button>
-        <button className="px-3.5 py-2 rounded text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all shrink-0 cursor-pointer">
+        <button
+          onClick={() => onNavChange('config-center')}
+          className={`px-3.5 py-2 rounded text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            activeNav === 'config-center' ? 'text-white bg-[#5c67f2]' : 'text-slate-300 hover:text-white hover:bg-slate-800 font-semibold'
+          }`}>
           配置中心
         </button>
-        <button className="px-3.5 py-2 rounded text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all shrink-0 cursor-pointer">
+        <button
+          onClick={() => onNavChange('export-center')}
+          className={`px-3.5 py-2 rounded text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            activeNav === 'export-center' ? 'text-white bg-[#5c67f2]' : 'text-slate-300 hover:text-white hover:bg-slate-800 font-semibold'
+          }`}>
           导出中心
         </button>
-        <button className="px-3.5 py-2 rounded text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all shrink-0 cursor-pointer">
+        <button
+          onClick={() => onNavChange('report-center')}
+          className={`px-3.5 py-2 rounded text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            activeNav === 'report-center' ? 'text-white bg-[#5c67f2]' : 'text-slate-300 hover:text-white hover:bg-slate-800 font-semibold'
+          }`}>
           报表中心
         </button>
-        <button className="px-3.5 py-2 rounded text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all shrink-0 cursor-pointer">
+        <button
+          onClick={() => onNavChange('approval-manage')}
+          className={`px-3.5 py-2 rounded text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            activeNav === 'approval-manage' ? 'text-white bg-[#5c67f2]' : 'text-slate-300 hover:text-white hover:bg-slate-800 font-semibold'
+          }`}>
           审批管理
         </button>
       </div>
@@ -58,6 +89,15 @@ export default function Topbar({ onDirectOrder }: TopbarProps) {
           <Clock className="w-3.5 h-3.5" />
           <span>{systime || '-'}</span>
         </div>
+
+        {/* Add User Action */}
+        <button
+          onClick={onAddUser}
+          className="px-4 py-2 bg-[#5c67f2] hover:bg-[#4a55e0] active:bg-[#3f4bd0] text-white rounded text-xs font-bold tracking-wider shadow-sm transition-all flex items-center gap-1 cursor-pointer"
+        >
+          <UserPlus className="w-3.5 h-3.5" />
+          新增用户
+        </button>
 
         {/* Direct Booking Action */}
         <button

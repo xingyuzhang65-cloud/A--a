@@ -5,18 +5,20 @@ import FilterForm from './components/FilterForm';
 import WaybillTable from './components/WaybillTable';
 import StatsPanel from './components/StatsPanel';
 import AddEditModal from './components/AddEditModal';
+import AddUserModal from './components/AddUserModal';
 import AssistantBot from './components/AssistantBot';
 import InvoiceModal from './components/InvoiceModal';
 import { INITIAL_WAYBILLS } from './data';
-import { Waybill, FilterParams, WaybillStatus } from './types';
-import { ShieldCheck, Info, Package, RefreshCw, Layers } from 'lucide-react';
+import { Waybill, FilterParams, WaybillStatus, User } from './types';
+import { ShieldCheck, Info, Package, RefreshCw, Layers, UserPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { appendTradeModeLog, seedTradeModeLogs } from './components/TradeModeLogModal';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<string>('waybills');
+  const [globalNav, setGlobalNav] = useState<string>('waybill-manage');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
-  
+
   // Waybill inventory list state (synchronized with localStorage)
   const [waybills, setWaybills] = useState<Waybill[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -28,6 +30,10 @@ export default function App() {
   const [showAddEditModal, setShowAddEditModal] = useState<boolean>(false);
   const [editingWaybill, setEditingWaybill] = useState<Waybill | null>(null);
   const [invoiceWaybill, setInvoiceWaybill] = useState<Waybill | null>(null);
+
+  // User management
+  const [users, setUsers] = useState<User[]>([]);
+  const [showAddUserModal, setShowAddUserModal] = useState<boolean>(false);
 
   // Initialize and load dataset
   useEffect(() => {
@@ -58,6 +64,11 @@ export default function App() {
     } else {
       setWaybills(INITIAL_WAYBILLS);
       localStorage.setItem('ans_waybills', JSON.stringify(INITIAL_WAYBILLS));
+    }
+
+    const savedUsers = localStorage.getItem('ans_users');
+    if (savedUsers) {
+      try { setUsers(JSON.parse(savedUsers)); } catch { setUsers([]); }
     }
   }, []);
 
@@ -149,6 +160,12 @@ export default function App() {
     alert(`Success: 已成功将所选的 ${ids.length} 票运单贸易方式变更为 ${tradeMode}。`);
   };
 
+  const handleSaveUser = (user: User) => {
+    const updated = [user, ...users];
+    setUsers(updated);
+    localStorage.setItem('ans_users', JSON.stringify(updated));
+  };
+
   const handleInvoiceSave = (waybillId: string, updatedFields: Partial<Waybill>) => {
     const updated = waybills.map(w => {
       if (w.id === waybillId) {
@@ -224,11 +241,14 @@ export default function App() {
       {/* Main Core Space */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden h-screen bg-[#f8fafc]">
         {/* Top bar header */}
-        <Topbar 
+        <Topbar
+          activeNav={globalNav}
+          onNavChange={(nav) => { setGlobalNav(nav); if (nav === 'waybill-manage') setCurrentTab('waybills'); }}
+          onAddUser={() => setShowAddUserModal(true)}
           onDirectOrder={() => {
             setEditingWaybill(null);
             setShowAddEditModal(true);
-          }} 
+          }}
         />
 
         {/* Dynamic page tab header bar */}
@@ -258,7 +278,33 @@ export default function App() {
         {/* Dynamic View container */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           <AnimatePresence>
-            {currentTab === 'waybills' ? (
+            {globalNav === 'admin-center' ? (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-800">管理中心</h2>
+                    <p className="text-xs text-slate-400 mt-0.5">用户管理 / 系统配置</p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddUserModal(true)}
+                    className="px-4 py-2 bg-[#5c67f2] hover:bg-[#4a55e0] active:bg-[#3f4bd0] text-white rounded text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    新增用户
+                  </button>
+                </div>
+                <div className="bg-white p-12 rounded-lg border border-slate-200 text-center select-none">
+                  <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                    <UserPlus className="w-6 h-6" />
+                  </div>
+                  <p className="text-xs text-slate-400">点击上方「新增用户」按钮添加系统用户</p>
+                </div>
+              </motion.div>
+            ) : currentTab === 'waybills' ? (
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -359,6 +405,13 @@ export default function App() {
           />
         )}
       </AnimatePresence>
+
+      {/* Add User Modal */}
+      <AddUserModal
+        isOpen={showAddUserModal}
+        onClose={() => setShowAddUserModal(false)}
+        onSave={handleSaveUser}
+      />
 
       {/* Gemini AI Floating Assistant Robot */}
       <AssistantBot currentWaybills={waybills} />

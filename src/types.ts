@@ -41,6 +41,20 @@ export interface Waybill {
   customsRoom: string; // 国内查验室
 }
 
+export interface User {
+  id: string;
+  username: string;
+  name: string;
+  phone: string;
+  department: string;
+  role: string;
+  position: string;
+  warehouse: string[];
+  wechatId: string;
+  linkedPerson: string;
+  createTime: string;
+}
+
 export interface FilterParams {
   keyword: string;
   clientName: string;
