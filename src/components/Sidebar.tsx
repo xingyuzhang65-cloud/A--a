@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   FilePlus, Warehouse, FileText, ClipboardList, DollarSign, ShieldAlert, 
   Headphones, Globe, Coins, FileCheck, Receipt, PackageMinus, Wallet, 
-  Wrench, ShoppingBag, Ruler, History, Box, Lock, ChevronDown, ChevronRight, Menu, ChevronLeft
+  Wrench, ShoppingBag, Ruler, History, Box, Lock, ChevronDown, ChevronRight, Menu, ChevronLeft,
+  Users, KeyRound, Truck, Building2, UserCog, type LucideIcon
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -11,6 +12,13 @@ interface SidebarProps {
   setCurrentTab: (tab: string) => void;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
+}
+
+interface SidebarMenuItem {
+  name: string;
+  icon: LucideIcon;
+  id: string;
+  children?: SidebarMenuItem[];
 }
 
 export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsCollapsed }: SidebarProps) {
@@ -31,7 +39,7 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
     }));
   };
 
-  const menuItems = [
+  const menuItems: SidebarMenuItem[] = [
     { name: '预报下单', icon: FilePlus, id: 'forecast-order' },
     { name: '未入仓运单', icon: Warehouse, id: 'unwarehoused' },
     { 
@@ -102,6 +110,16 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
     { name: '预留仓', icon: Lock, id: 'reserved-warehouse' }
   ];
 
+  const managementMenuItems: SidebarMenuItem[] = [
+    { name: '组织架构', icon: Users, id: 'management-org' },
+    { name: '角色与权限', icon: KeyRound, id: 'management-roles' },
+    { name: '仓库管理', icon: Building2, id: 'management-warehouse' },
+    { name: '司机管理', icon: Truck, id: 'management-drivers' },
+    { name: '客户管理', icon: UserCog, id: 'management-customers' }
+  ];
+
+  const visibleMenuItems = currentTab.startsWith('management-') ? managementMenuItems : menuItems;
+
   return (
     <aside 
       className={`bg-[#1c2438] text-slate-300 flex flex-col transition-all duration-300 border-r border-[#2d3a5a] relative select-none h-screen ${
@@ -128,7 +146,7 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
 
       {/* Navigation menu list */}
       <div className="flex-1 overflow-y-auto py-3 space-y-1 scrollbar-thin scrollbar-thumb-slate-700">
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const IconComponent = item.icon;
           const isGroup = !!item.children;
           const isExpanded = expandedGroups[item.name];

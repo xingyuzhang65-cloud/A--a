@@ -8,9 +8,10 @@ import AddEditModal from './components/AddEditModal';
 import AddUserModal from './components/AddUserModal';
 import AssistantBot from './components/AssistantBot';
 import InvoiceModal from './components/InvoiceModal';
+import ManagementCenter, { DEFAULT_MANAGEMENT_USERS } from './components/ManagementCenter';
 import { INITIAL_WAYBILLS } from './data';
 import { Waybill, FilterParams, WaybillStatus, User } from './types';
-import { ShieldCheck, Info, Package, RefreshCw, Layers, UserPlus } from 'lucide-react';
+import { ShieldCheck, Info, Package, RefreshCw, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { appendTradeModeLog, seedTradeModeLogs } from './components/TradeModeLogModal';
 
@@ -68,7 +69,10 @@ export default function App() {
 
     const savedUsers = localStorage.getItem('ans_users');
     if (savedUsers) {
-      try { setUsers(JSON.parse(savedUsers)); } catch { setUsers([]); }
+      try { setUsers(JSON.parse(savedUsers)); } catch { setUsers(DEFAULT_MANAGEMENT_USERS); }
+    } else {
+      setUsers(DEFAULT_MANAGEMENT_USERS);
+      localStorage.setItem('ans_users', JSON.stringify(DEFAULT_MANAGEMENT_USERS));
     }
   }, []);
 
@@ -166,6 +170,11 @@ export default function App() {
     localStorage.setItem('ans_users', JSON.stringify(updated));
   };
 
+  const handleUsersChange = (updated: User[]) => {
+    setUsers(updated);
+    localStorage.setItem('ans_users', JSON.stringify(updated));
+  };
+
   const handleInvoiceSave = (waybillId: string, updatedFields: Partial<Waybill>) => {
     const updated = waybills.map(w => {
       if (w.id === waybillId) {
@@ -243,7 +252,12 @@ export default function App() {
         {/* Top bar header */}
         <Topbar
           activeNav={globalNav}
-          onNavChange={(nav) => { setGlobalNav(nav); if (nav === 'waybill-manage') setCurrentTab('waybills'); }}
+          onNavChange={(nav) => {
+            setGlobalNav(nav);
+            if (nav === 'waybill-manage') setCurrentTab('waybills');
+            else if (nav === 'admin-center') setCurrentTab('management-org');
+            else setCurrentTab(nav);
+          }}
           onAddUser={() => setShowAddUserModal(true)}
           onDirectOrder={() => {
             setEditingWaybill(null);
@@ -270,6 +284,19 @@ export default function App() {
             }`}>
               业务运单监控 <span className="text-[10px] opacity-70">×</span>
             </button>
+            {globalNav === 'admin-center' && (
+              <>
+                <button className="px-3.5 h-8 text-xs font-semibold rounded-md border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-700 flex items-center gap-1.5">
+                  角色与权限 <span className="text-[10px] text-slate-400">×</span>
+                </button>
+                <button className="px-3.5 h-8 text-xs font-semibold rounded-md border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-700 flex items-center gap-1.5">
+                  司机管理 <span className="text-[10px] text-slate-400">×</span>
+                </button>
+                <button className="px-4 h-8 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all bg-[#5c67f2] text-white shadow-sm">
+                  组织架构 <span className="text-[10px] opacity-70">×</span>
+                </button>
+              </>
+            )}
           </div>
           
           <div className="text-slate-400 font-bold px-2 ml-auto cursor-default hover:text-slate-600 text-sm">›</div>
@@ -282,27 +309,9 @@ export default function App() {
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-4"
+                className="h-full"
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-800">管理中心</h2>
-                    <p className="text-xs text-slate-400 mt-0.5">用户管理 / 系统配置</p>
-                  </div>
-                  <button
-                    onClick={() => setShowAddUserModal(true)}
-                    className="px-4 py-2 bg-[#5c67f2] hover:bg-[#4a55e0] active:bg-[#3f4bd0] text-white rounded text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-                  >
-                    <UserPlus className="w-3.5 h-3.5" />
-                    新增用户
-                  </button>
-                </div>
-                <div className="bg-white p-12 rounded-lg border border-slate-200 text-center select-none">
-                  <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
-                    <UserPlus className="w-6 h-6" />
-                  </div>
-                  <p className="text-xs text-slate-400">点击上方「新增用户」按钮添加系统用户</p>
-                </div>
+                <ManagementCenter users={users} onAddUser={() => setShowAddUserModal(true)} onUsersChange={handleUsersChange} />
               </motion.div>
             ) : currentTab === 'waybills' ? (
               <motion.div
