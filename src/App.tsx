@@ -9,6 +9,8 @@ import AddUserModal from './components/AddUserModal';
 import AssistantBot from './components/AssistantBot';
 import InvoiceModal from './components/InvoiceModal';
 import ManagementCenter, { DEFAULT_MANAGEMENT_USERS } from './components/ManagementCenter';
+import InstructionManagement from './components/InstructionManagement';
+import StagingManagement from './components/StagingManagement';
 import { INITIAL_WAYBILLS } from './data';
 import { Waybill, FilterParams, WaybillStatus, User } from './types';
 import { ShieldCheck, Info, Package, RefreshCw, Layers } from 'lucide-react';
@@ -16,9 +18,34 @@ import { motion, AnimatePresence } from 'motion/react';
 import { appendTradeModeLog, seedTradeModeLogs } from './components/TradeModeLogModal';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<string>('waybills');
+  const [currentTab, setCurrentTab] = useState<string>(() => {
+    const hashTab = window.location.hash.slice(1);
+    return ['instruction-management', 'staging-management'].includes(hashTab) ? hashTab : 'waybills';
+  });
   const [globalNav, setGlobalNav] = useState<string>('waybill-manage');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+
+  const navigateTab = (tab: string) => {
+    setCurrentTab(tab);
+    setGlobalNav(tab.startsWith('management-') ? 'admin-center' : 'waybill-manage');
+    const hash = ['instruction-management', 'staging-management'].includes(tab) ? `#${tab}` : '';
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${hash}`);
+  };
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hashTab = window.location.hash.slice(1);
+      if (['instruction-management', 'staging-management'].includes(hashTab)) {
+        setCurrentTab(hashTab);
+        setGlobalNav('waybill-manage');
+      } else if (!window.location.hash) {
+        setCurrentTab('waybills');
+        setGlobalNav('waybill-manage');
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Waybill inventory list state (synchronized with localStorage)
   const [waybills, setWaybills] = useState<Waybill[]>([]);
@@ -242,7 +269,7 @@ export default function App() {
       {/* Sidebar panel */}
       <Sidebar 
         currentTab={currentTab} 
-        setCurrentTab={setCurrentTab} 
+        setCurrentTab={navigateTab}
         isCollapsed={isSidebarCollapsed} 
         setIsCollapsed={setIsSidebarCollapsed} 
       />
@@ -254,6 +281,7 @@ export default function App() {
           activeNav={globalNav}
           onNavChange={(nav) => {
             setGlobalNav(nav);
+            window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
             if (nav === 'waybill-manage') setCurrentTab('waybills');
             else if (nav === 'admin-center') setCurrentTab('management-org');
             else setCurrentTab(nav);
@@ -277,13 +305,25 @@ export default function App() {
             <button className="px-3.5 h-8 text-xs font-semibold rounded-md border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-700 flex items-center gap-1.5">
               预留仓 <span className="text-[10px] text-slate-400">×</span>
             </button>
-            <button className={`px-4 h-8 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all ${
+            <button onClick={() => navigateTab('waybills')} className={`px-4 h-8 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all ${
               currentTab === 'waybills'
                 ? 'bg-[#5c67f2] text-white shadow-sm'
                 : 'border border-slate-200 bg-slate-50 text-slate-500'
             }`}>
               业务运单监控 <span className="text-[10px] opacity-70">×</span>
             </button>
+            {currentTab === 'instruction-management' && (
+              <div className="px-4 h-8 text-xs font-bold rounded-md flex items-center gap-2.5 bg-[#5c67f2] text-white shadow-sm shrink-0">
+                指令管理
+                <button type="button" aria-label="关闭指令管理页签" onClick={() => navigateTab('waybills')} className="text-[12px] opacity-70 hover:opacity-100 cursor-pointer">×</button>
+              </div>
+            )}
+            {currentTab === 'staging-management' && (
+              <div className="px-4 h-8 text-xs font-bold rounded-md flex items-center gap-2.5 bg-[#5c67f2] text-white shadow-sm shrink-0">
+                暂存管理
+                <button type="button" aria-label="关闭暂存管理页签" onClick={() => navigateTab('waybills')} className="text-[12px] opacity-70 hover:opacity-100 cursor-pointer">×</button>
+              </div>
+            )}
             {globalNav === 'admin-center' && (
               <>
                 <button className="px-3.5 h-8 text-xs font-semibold rounded-md border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-700 flex items-center gap-1.5">
@@ -312,6 +352,14 @@ export default function App() {
                 className="h-full"
               >
                 <ManagementCenter users={users} onAddUser={() => setShowAddUserModal(true)} onUsersChange={handleUsersChange} />
+              </motion.div>
+            ) : currentTab === 'instruction-management' ? (
+              <motion.div key="instruction-management" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="h-full min-h-[500px]">
+                <InstructionManagement />
+              </motion.div>
+            ) : currentTab === 'staging-management' ? (
+              <motion.div key="staging-management" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="h-full min-h-[500px]">
+                <StagingManagement />
               </motion.div>
             ) : currentTab === 'waybills' ? (
               <motion.div

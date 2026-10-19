@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   FilePlus, Warehouse, FileText, ClipboardList, DollarSign, ShieldAlert, 
   Headphones, Globe, Coins, FileCheck, Receipt, PackageMinus, Wallet, 
@@ -25,12 +25,18 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     '业务运单': true,
     '客服运单管理': false,
-    '海外中转单': false,
+    '海外中转单': ['instruction-management', 'staging-management'].includes(currentTab),
     '财务运单': false,
     '工单': false,
     '服务订单': false,
     '货件管理': false
   });
+
+  useEffect(() => {
+    if (['instruction-management', 'staging-management'].includes(currentTab)) {
+      setExpandedGroups(groups => ({ ...groups, '海外中转单': true }));
+    }
+  }, [currentTab]);
 
   const toggleGroup = (group: string) => {
     setExpandedGroups(prev => ({
@@ -66,7 +72,8 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
       icon: Globe, 
       id: 'overseas-transit',
       children: [
-        { name: '中转记录', icon: ClipboardList, id: 'transit-logs' }
+        { name: '指令管理', icon: FileCheck, id: 'instruction-management' },
+        { name: '暂存管理', icon: Warehouse, id: 'staging-management' }
       ]
     },
     { 
