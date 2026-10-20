@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardList, Download, FileSearch, History, ImageIcon, RotateCcw, Search, Settings, X, XCircle } from 'lucide-react';
+import { Check, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardList, Download, FileSearch, History, ImageIcon, Pencil, RotateCcw, Search, Settings, X, XCircle } from 'lucide-react';
 import {
   EMPTY_INSTRUCTION_LIST_FILTERS, INSTRUCTION_LIST_TABS, displayInstructionStatus, exportInstructionListCsv,
   filterInstructionList, getInstructionFailureReason, loadInstructionListState, persistInstructionListState,
-  transitionInstructionList, type InstructionListFilters, type InstructionListLog, type InstructionListRecord, type InstructionListTab,
+  transitionInstructionList, updateInstructionRemark, type InstructionListFilters, type InstructionListLog, type InstructionListRecord, type InstructionListTab,
 } from '../instructionListData';
+import type { Waybill } from '../types';
 
 const COLUMN_KEY = 'ans_instruction_list_columns_v1';
+const COLUMN_VERSION_KEY = `${COLUMN_KEY}_version`;
 const columns = [
   { key: 'names', label: '指令名称', width: 180 },
   { key: 'created', label: '创建时间', width: 168 },
@@ -29,6 +31,8 @@ const columns = [
   { key: 'merchandiser', label: '跟单员', width: 110 },
   { key: 'fee', label: '指令费用', width: 130 },
   { key: 'packages', label: '发货件数', width: 100 },
+  { key: 'customerRemark', label: '客户备注', width: 260 },
+  { key: 'remark', label: '备注', width: 260 },
   { key: 'weight', label: '重量（kg）', width: 110 },
   { key: 'volume', label: '方数（m³）', width: 120 },
   { key: 'arrived', label: '是否到达海外仓', width: 135 },
@@ -40,20 +44,25 @@ const defaults = columns.filter(column => !('hidden' in column && column.hidden)
 const inputClass = 'w-full px-3 py-2 text-xs border border-slate-200 rounded bg-slate-50 placeholder:text-slate-400 focus:outline-none focus:border-[#5c67f2] focus:ring-2 focus:ring-[#5c67f2]/10 transition-all';
 const secondaryButton = 'inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer';
 const primaryButton = 'inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold rounded bg-[#5c67f2] text-white hover:bg-[#4a55e0] shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer';
-type Modal = { kind: 'detail'; id: string } | { kind: 'logs'; ids: string[] } | { kind: 'transition'; action: 'approve' | 'confirm' | 'cancel'; ids: string[] } | null;
+type Modal = { kind: 'detail'; id: string } | { kind: 'logs'; ids: string[] } | { kind: 'transition'; action: 'approve' | 'confirm' | 'cancel'; ids: string[] } | { kind: 'remark'; id: string; initialRemark: string } | null;
 
 function loadColumns(): ColumnKey[] {
   try {
     const saved = JSON.parse(localStorage.getItem(COLUMN_KEY) || 'null');
     if (Array.isArray(saved)) {
       const valid = columns.filter(column => saved.includes(column.key)).map(column => column.key);
-      if (valid.length) return valid;
+      if (valid.length) {
+        if (localStorage.getItem(COLUMN_VERSION_KEY) === '2') return valid;
+        const next = columns.filter(column => valid.includes(column.key) || column.key === 'customerRemark' || column.key === 'remark').map(column => column.key);
+        try { localStorage.setItem(COLUMN_KEY, JSON.stringify(next)); localStorage.setItem(COLUMN_VERSION_KEY, '2'); } catch { /* Apply the new fields for this visit. */ }
+        return next;
+      }
     }
   } catch { /* Use the complete reference fields by default. */ }
   return defaults;
 }
 
-export default function InstructionListPage() {
+export default function InstructionListPage({ waybills = [] }: { waybills?: Pick<Waybill, 'waybillNo' | 'clientRemark'>[] }) {
   const [data, setData] = useState(() => loadInstructionListState());
   const [draft, setDraft] = useState<InstructionListFilters>(EMPTY_INSTRUCTION_LIST_FILTERS);
   const [applied, setApplied] = useState<InstructionListFilters>(EMPTY_INSTRUCTION_LIST_FILTERS);
@@ -68,11 +77,16 @@ export default function InstructionListPage() {
   const [modal, setModal] = useState<Modal>(null);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const [remarkDraft, setRemarkDraft] = useState('');
   const allRef = useRef<HTMLInputElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const filtered = useMemo(() => filterInstructionList(data.records, applied), [data.records, applied]);
+  const records = useMemo(() => {
+    const sourceNotes = new Map(waybills.filter(row => typeof row.waybillNo === 'string' && typeof row.clientRemark === 'string').map(row => [row.waybillNo, row.clientRemark]));
+    return data.records.map(row => sourceNotes.has(row.waybill) ? { ...row, customerRemark: sourceNotes.get(row.waybill)! } : row);
+  }, [data.records, waybills]);
+  const filtered = useMemo(() => filterInstructionList(records, applied), [records, applied]);
   const visible = useMemo(() => filterInstructionList(filtered, EMPTY_INSTRUCTION_LIST_FILTERS, tab), [filtered, tab]);
   const pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
   const pageRows = visible.slice((page - 1) * pageSize, page * pageSize);
@@ -81,7 +95,7 @@ export default function InstructionListPage() {
   const allSelected = pageRows.length > 0 && pageRows.every(row => selectedIds.includes(row.id));
   const someSelected = pageRows.some(row => selectedIds.includes(row.id));
   const activeColumns = columns.filter(column => visibleColumns.includes(column.key) && (column.key !== 'failureReason' || tab === '已完成' || tab === '全部' || visibleColumns.length === 1));
-  const detail = modal?.kind === 'detail' ? data.records.find(row => row.id === modal.id) : null;
+  const detail = modal?.kind === 'detail' ? records.find(row => row.id === modal.id) : null;
   const logs = modal?.kind === 'logs' ? data.logs.filter(log => !modal.ids.length || modal.ids.includes(log.recordId)).slice().reverse() : [];
   const options = (key: 'salesman' | 'orderType' | 'instructionType') => [...new Set(data.records.map(row => row[key]).filter(value => value && value !== '-'))];
   const setFilter = (key: keyof InstructionListFilters, value: string) => setDraft(current => ({ ...current, [key]: value }));
@@ -131,7 +145,7 @@ export default function InstructionListPage() {
   }
   function reset() { setDraft(EMPTY_INSTRUCTION_LIST_FILTERS); setApplied(EMPTY_INSTRUCTION_LIST_FILTERS); setSelectedIds([]); setPage(1); }
   function changeTab(next: InstructionListTab) { setTab(next); setPage(1); setSelectedIds([]); }
-  function saveColumns(next: ColumnKey[]) { setVisibleColumns(next); try { localStorage.setItem(COLUMN_KEY, JSON.stringify(next)); } catch { /* Still apply settings for this visit. */ } }
+  function saveColumns(next: ColumnKey[]) { setVisibleColumns(next); try { localStorage.setItem(COLUMN_KEY, JSON.stringify(next)); localStorage.setItem(COLUMN_VERSION_KEY, '2'); } catch { /* Still apply settings for this visit. */ } }
   function toggleColumn(key: ColumnKey) {
     if (visibleColumns.length === 1 && visibleColumns.includes(key)) return;
     saveColumns(visibleColumns.includes(key) ? visibleColumns.filter(column => column !== key) : [...visibleColumns, key]);
@@ -157,6 +171,20 @@ export default function InstructionListPage() {
     setNotice(`已${modal.action === 'approve' ? '审批通过' : modal.action === 'confirm' ? '确认' : '取消'} ${targets.length} 条指令`);
   }
   function openLogs(ids: string[]) { setError(''); setModal({ kind: 'logs', ids }); }
+  function openRemark(row: InstructionListRecord) { setError(''); setRemarkDraft(row.remark); setModal({ kind: 'remark', id: row.id, initialRemark: row.remark }); }
+  function saveRemark(event: React.FormEvent) {
+    event.preventDefault();
+    if (modal?.kind !== 'remark') return;
+    const latest = loadInstructionListState();
+    const target = latest.records.find(row => row.id === modal.id);
+    if (!target || target.remark !== modal.initialRemark) { setError('备注已变更，请关闭弹窗并重新打开后再编辑。'); setData(latest); return; }
+    const next = updateInstructionRemark(latest, modal.id, remarkDraft);
+    if (next !== latest) {
+      try { persistInstructionListState(next); }
+      catch { setError('本地存储不可用或空间不足，请检查浏览器设置后重试。'); return; }
+    }
+    setData(next); setModal(null); setError(''); setNotice(next === latest ? '备注未变化' : '备注已保存');
+  }
   function renderCell(row: InstructionListRecord, key: ColumnKey) {
     if (key === 'names') return <div className="space-y-1 py-0.5 font-medium text-slate-700">{row.names.map((name, index) => <div key={`${name}-${index}`} className="truncate" title={name}>{name}</div>)}</div>;
     if (key === 'status') {
@@ -165,6 +193,8 @@ export default function InstructionListPage() {
       return <div><span className={`inline-block px-2 py-0.5 rounded border text-[11px] whitespace-nowrap ${color}`}>{text}</span>{row.processingResult && row.processingResult !== text && <p className="mt-1 text-[10px] text-slate-400">处理结果：{row.processingResult}</p>}</div>;
     }
     if (key === 'failureReason') return <p className="text-xs text-rose-500 whitespace-pre-wrap break-words leading-relaxed">{getInstructionFailureReason(row) || '—'}</p>;
+    if (key === 'customerRemark') return <p className="whitespace-pre-wrap break-words leading-relaxed line-clamp-3" title={row.customerRemark}>{row.customerRemark || '—'}</p>;
+    if (key === 'remark') return <div className="flex items-start gap-2"><p className="flex-1 min-w-0 whitespace-pre-wrap break-words leading-relaxed line-clamp-3" title={row.remark}>{row.remark || '—'}</p><button type="button" aria-label={`编辑备注 ${row.instructionNo}`} title="编辑备注" onClick={() => openRemark(row)} className="p-1 rounded text-[#5c67f2] hover:bg-indigo-50 cursor-pointer shrink-0"><Pencil className="w-3.5 h-3.5" /></button></div>;
     if (key === 'photo') return row.photo ? <div className="flex items-center gap-2 p-2 border border-slate-200 rounded bg-slate-50"><ImageIcon className="w-4 h-4 shrink-0 text-slate-400" /><span className="truncate text-[11px] text-slate-500" title={row.photo}>{row.photo}</span></div> : <span className="text-slate-400">暂无图片</span>;
     if (key === 'fee') return <div className="text-right tabular-nums whitespace-nowrap">{row.fee.toFixed(2)} <span className="text-[10px] text-slate-400">{row.currency}</span></div>;
     if (key === 'weight' || key === 'volume' || key === 'packages') return <span className="block text-right tabular-nums">{row[key].toLocaleString('zh-CN', { maximumFractionDigits: key === 'volume' ? 6 : 3 })}</span>;
@@ -172,6 +202,9 @@ export default function InstructionListPage() {
   }
   function renderLog(log: InstructionListLog) {
     return <div key={log.id} className="border border-slate-200 rounded-lg overflow-hidden"><div className="bg-slate-50 px-4 py-2.5 flex justify-between flex-wrap gap-2 text-xs"><strong className="font-semibold text-slate-700">{log.action}<span className="ml-2 font-normal text-slate-400">{log.operator}</span></strong><time className="text-slate-400" dateTime={log.timestamp}>{new Date(log.timestamp).toLocaleString('zh-CN', { hour12: false })}</time></div><div className="p-4 text-xs space-y-2"><p className="font-mono text-slate-400">{log.instructionNo}</p><p className="text-slate-600 leading-relaxed whitespace-pre-wrap break-words">{log.detail}</p>{(log.before || log.after) && <p className="text-slate-400">{log.before || '—'} <span className="mx-2">→</span><span className="text-[#5c67f2]">{log.after || '—'}</span></p>}</div></div>;
+  }
+  function renderDetailFields(fields: string[][]) {
+    return fields.map(([label, value]) => <div key={label} className="min-w-0 border-b border-slate-100 pb-3"><dt className="text-xs text-slate-400 mb-1.5">{label}</dt><dd className="text-xs text-slate-700 break-words leading-relaxed whitespace-pre-wrap">{value || '—'}</dd></div>);
   }
 
   return <div className="h-full min-h-0 flex flex-col gap-5">
@@ -222,10 +255,30 @@ export default function InstructionListPage() {
     {notice && createPortal(<div role="status" className="fixed top-28 left-1/2 -translate-x-1/2 z-60 bg-white border border-slate-200 rounded-lg shadow-lg px-4 py-3 text-xs text-slate-700 flex items-center gap-2"><Check className="w-4 h-4 text-[#5c67f2]" />{notice}<button type="button" aria-label="关闭指令列表提示" onClick={() => setNotice('')} className="ml-3 text-slate-400 hover:text-slate-600 cursor-pointer"><X className="w-3.5 h-3.5" /></button></div>, document.body)}
     {modal && createPortal(<div className={`fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm ${modal.kind === 'detail' ? 'flex justify-end' : 'flex items-center justify-center p-5'}`}>
       <aside ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="instruction-list-dialog-title" className={`bg-white border border-slate-200 shadow-2xl flex flex-col ${modal.kind === 'detail' ? 'h-full w-[560px] max-w-full' : 'w-full max-w-2xl max-h-[90vh] rounded-xl'}`}>
-        <div className={`px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between shrink-0 ${modal.kind === 'detail' ? '' : 'rounded-t-xl'}`}><h2 id="instruction-list-dialog-title" className="text-sm font-bold text-slate-800 flex items-center gap-2"><ClipboardList className="w-4 h-4 text-[#5c67f2]" />{modal.kind === 'detail' ? detail?.instructionType === '自提' ? '自提指令详情' : '指令详情' : modal.kind === 'logs' ? '操作日志' : modal.action === 'approve' ? '批量审批' : modal.action === 'confirm' ? '确认指令' : '取消下单'}</h2><button type="button" aria-label="关闭指令列表弹窗" onClick={() => setModal(null)} className="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 cursor-pointer"><X className="w-4 h-4" /></button></div>
-        {modal.kind === 'detail' && detail ? <><div className="p-6 overflow-y-auto min-h-0 flex-1 space-y-5"><div className="p-4 bg-indigo-50/60 rounded-lg border border-indigo-100"><p className="font-mono text-xs font-semibold text-[#5c67f2] break-all">{detail.instructionNo}</p><div className="mt-3">{renderCell(detail, 'status')}</div></div><dl className="grid grid-cols-2 gap-x-5 gap-y-4">{[
-          ['运单号', detail.waybill], ['指令名称', detail.names.join(' / ')], ['状态页签', detail.tab], ['指令单类型', detail.instructionType], ['创建时间', detail.created], ['修改时间', detail.updated], ['客户简称', detail.customer], ['仓库代码', detail.warehouse], ['Shipment ID', detail.shipment], ['Reference ID', detail.reference], ['预计提货时间', detail.expectedPickupTime], ['提货联系人', detail.pickupContact], ['联系电话', detail.pickupPhone], ['目的地', detail.destination], ['指令费用', `${detail.fee.toFixed(2)} ${detail.currency}`], ['发货件数', String(detail.packages)], ['重量（kg）', String(detail.weight)], ['方数（m³）', String(detail.volume)], ['是否到达海外仓', detail.arrived], ['入仓时间（海外仓）', detail.overseasTime], ['拦截原因', detail.interceptReason], ['失败原因', getInstructionFailureReason(detail)], ['关联托盘', detail.palletLabel], ['作业备注', detail.remark],
-        ].filter(([label, value]) => value || !['预计提货时间', '提货联系人', '联系电话', '关联托盘', '作业备注', '拦截原因', '失败原因'].includes(label)).map(([label, value]) => <div key={label} className="border-b border-slate-100 pb-3"><dt className="text-xs text-slate-400 mb-1.5">{label}</dt><dd className="text-xs text-slate-700 break-words leading-relaxed whitespace-pre-wrap">{value || '—'}</dd></div>)}</dl></div><div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3 shrink-0"><button type="button" onClick={() => openLogs([detail.id])} className={secondaryButton}><History className="w-3.5 h-3.5" />查看日志</button><button type="button" onClick={() => setModal(null)} className={secondaryButton}>关闭</button></div></> : modal.kind === 'logs' ? <><div className="p-6 overflow-y-auto min-h-0 flex-1">{logs.length ? <div className="space-y-4">{logs.map(renderLog)}</div> : <div className="text-center py-12"><History className="w-10 h-10 text-slate-300 mx-auto mb-3" /><p className="text-sm font-medium text-slate-500">暂无操作日志</p><p className="text-xs text-slate-400 mt-2">审批、确认或取消指令后，将在此记录变更</p></div>}</div><div className="px-6 py-4 border-t border-slate-200 flex justify-end shrink-0"><button type="button" onClick={() => setModal(null)} className={secondaryButton}>关闭</button></div></> : modal.kind === 'transition' ? <form onSubmit={confirmTransition} className="flex flex-col min-h-0">
+        <div className={`px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between shrink-0 ${modal.kind === 'detail' ? '' : 'rounded-t-xl'}`}><h2 id="instruction-list-dialog-title" className="text-sm font-bold text-slate-800 flex items-center gap-2"><ClipboardList className="w-4 h-4 text-[#5c67f2]" />{modal.kind === 'detail' ? detail?.instructionType === '自提' ? '自提指令详情' : '指令详情' : modal.kind === 'logs' ? '操作日志' : modal.kind === 'remark' ? '编辑备注' : modal.action === 'approve' ? '批量审批' : modal.action === 'confirm' ? '确认指令' : '取消下单'}</h2><button type="button" aria-label="关闭指令列表弹窗" onClick={() => setModal(null)} className="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 cursor-pointer"><X className="w-4 h-4" /></button></div>
+        {modal.kind === 'detail' && detail ? <>
+          <div className="p-6 overflow-y-auto min-h-0 flex-1 space-y-5">
+            <div className="p-4 bg-indigo-50/60 rounded-lg border border-indigo-100"><p className="font-mono text-xs font-semibold text-[#5c67f2] break-all">{detail.instructionNo}</p><div className="mt-3">{renderCell(detail, 'status')}</div></div>
+            <section aria-label="运单信息" className="space-y-4">
+              <h3 className="text-xs font-bold text-slate-700">运单信息</h3>
+              <dl className="grid grid-cols-2 gap-x-5">{renderDetailFields([['发货件数', String(detail.packages)], ['客户备注', detail.customerRemark]])}</dl>
+              <dl className="grid grid-cols-2 gap-x-5 gap-y-4">{renderDetailFields([
+                ['运单号', detail.waybill], ['客户简称', detail.customer], ['仓库代码', detail.warehouse], ['Shipment ID', detail.shipment], ['Reference ID', detail.reference], ['目的地', detail.destination], ['重量（kg）', String(detail.weight)], ['方数（m³）', String(detail.volume)], ['是否到达海外仓', detail.arrived], ['入仓时间（海外仓）', detail.overseasTime],
+              ])}</dl>
+            </section>
+            <section aria-label="指令信息" className="space-y-4">
+              <h3 className="text-xs font-bold text-slate-700">指令信息</h3>
+              <dl className="grid grid-cols-2 gap-x-5 gap-y-4">{renderDetailFields([
+                ['指令名称', detail.names.join(' / ')], ['状态页签', detail.tab], ['指令单类型', detail.instructionType], ['指令费用', `${detail.fee.toFixed(2)} ${detail.currency}`], ['创建时间', detail.created], ['修改时间', detail.updated], ['预计提货时间', detail.expectedPickupTime], ['提货联系人', detail.pickupContact], ['联系电话', detail.pickupPhone], ['拦截原因', detail.interceptReason], ['失败原因', getInstructionFailureReason(detail)], ['关联托盘', detail.palletLabel],
+              ].filter(([label, value]) => value || !['预计提货时间', '提货联系人', '联系电话', '关联托盘', '拦截原因', '失败原因'].includes(label)))}</dl>
+            </section>
+            <section aria-label="备注" className="flex items-start gap-3"><dl className="flex-1 min-w-0"><dt className="text-xs font-bold text-slate-700">备注</dt><dd className="mt-3 text-xs text-slate-700 break-words leading-relaxed whitespace-pre-wrap">{detail.remark || '—'}</dd></dl><button type="button" aria-label={`编辑备注 ${detail.instructionNo}`} onClick={() => openRemark(detail)} className="inline-flex shrink-0 items-center gap-1 text-xs text-[#5c67f2] hover:underline cursor-pointer"><Pencil className="w-3.5 h-3.5" />编辑备注</button></section>
+          </div>
+          <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3 shrink-0"><button type="button" onClick={() => openLogs([detail.id])} className={secondaryButton}><History className="w-3.5 h-3.5" />查看日志</button><button type="button" onClick={() => setModal(null)} className={secondaryButton}>关闭</button></div>
+        </> : modal.kind === 'logs' ? <><div className="p-6 overflow-y-auto min-h-0 flex-1">{logs.length ? <div className="space-y-4">{logs.map(renderLog)}</div> : <div className="text-center py-12"><History className="w-10 h-10 text-slate-300 mx-auto mb-3" /><p className="text-sm font-medium text-slate-500">暂无操作日志</p><p className="text-xs text-slate-400 mt-2">审批、确认、取消或修改备注后，将在此记录变更</p></div>}</div><div className="px-6 py-4 border-t border-slate-200 flex justify-end shrink-0"><button type="button" onClick={() => setModal(null)} className={secondaryButton}>关闭</button></div></> : modal.kind === 'remark' ? <form onSubmit={saveRemark} className="flex flex-col min-h-0">
+          <div className="p-6 overflow-y-auto min-h-0 space-y-4"><p className="font-mono text-xs text-slate-400 break-all">{records.find(row => row.id === modal.id)?.instructionNo}</p><label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-500">备注<textarea rows={5} value={remarkDraft} onChange={event => setRemarkDraft(event.target.value)} placeholder="请输入备注" className={`${inputClass} resize-y`} /></label>{error && <p role="alert" className="text-xs p-3 rounded bg-rose-50 text-rose-600">{error}</p>}</div>
+          <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3 shrink-0"><button type="button" onClick={() => setModal(null)} className={secondaryButton}>返回</button><button type="submit" className={primaryButton}>保存备注</button></div>
+        </form> : modal.kind === 'transition' ? <form onSubmit={confirmTransition} className="flex flex-col min-h-0">
           <div className="p-6 overflow-y-auto min-h-0 space-y-4">
             <p className="text-sm text-slate-700">{modal.action === 'approve' ? '审批通过所选指令？通过后可在“已确认”页签查看。' : modal.action === 'confirm' ? '确认所选指令？确认后可在“已确认”页签查看。' : '取消所选指令？取消后可在“取消”页签查看。'}</p>
             <div className="p-3 bg-slate-50 border border-slate-100 rounded text-xs text-slate-500">共 <strong className="text-[#5c67f2]">{modal.ids.length}</strong> 条待确认指令</div>

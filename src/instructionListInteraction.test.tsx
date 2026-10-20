@@ -565,3 +565,136 @@ test('the actual staging order form flows into the instruction list with confirm
   assert.equal(rows().length, 2);
   assert.equal(stored().logs.length, 4, 'each real creation and transition must retain one log');
 });
+
+test('customer remarks and ordinary remarks are visible columns and customer remarks share a read-only detail row with shipment quantity', async () => {
+  const target = { ...INITIAL_INSTRUCTION_LIST_RECORDS.find(row => row.tab === '待确认')!, customerRemark: '客户要求：请保持原箱包装\n轻拿轻放', remark: '仓库内部备注' };
+  saveFixture([target]);
+  await remount();
+  assert.ok(headers().includes('客户备注'));
+  assert.ok(headers().includes('备注'));
+  assert.equal(cell(rowFor(target.instructionNo), '客户备注').textContent, target.customerRemark);
+  assert.ok(cell(rowFor(target.instructionNo), '备注').textContent?.includes(target.remark));
+  await click(get<HTMLButtonElement>(`[aria-label="查看指令 ${target.instructionNo}"]`));
+  const section = get<HTMLElement>('[aria-label="运单信息"]', dialog());
+  const sharedRow = get<HTMLDListElement>('dl', section);
+  const fields = [...sharedRow.children];
+  assert.equal(fields.length, 2, 'quantity and customer remark must occupy a dedicated shared row');
+  assert.deepEqual(fields.map(item => get('dt', item).textContent), ['发货件数', '客户备注']);
+  assert.equal(get('dd', fields[0]).textContent, String(target.packages));
+  assert.equal(get('dd', fields[1]).textContent, target.customerRemark);
+  assert.match(sharedRow.className, /grid-cols-2/);
+  assert.equal(fields[1].querySelector('input, textarea, select, button, [contenteditable="true"]'), null, 'customer remarks must not expose editing controls');
+  assert.ok([...dialog().querySelectorAll('dt')].some(item => item.textContent === '备注'));
+  await click(button('关闭', dialog()));
+  saveFixture([{ ...target, customerRemark: '' }]);
+  await remount();
+  await click(get<HTMLButtonElement>(`[aria-label="查看指令 ${target.instructionNo}"]`));
+  const emptyRow = get<HTMLDListElement>('[aria-label="运单信息"] dl', dialog());
+  assert.deepEqual([...emptyRow.querySelectorAll('dt')].map(item => item.textContent), ['发货件数', '客户备注']);
+  assert.equal(get('dd', emptyRow.children[1]).textContent, '—', 'empty customer notes remain visible as a placeholder');
+});
+
+test('ordinary remark editing saves once with a log, preserves customer remarks and workflow, and survives remount', async (t) => {
+  const target = { ...INITIAL_INSTRUCTION_LIST_RECORDS.find(row => row.tab === '待确认')!, customerRemark: '只读客户要求', remark: '原备注' };
+  saveFixture([target]);
+  await remount();
+  const originalSet = dom.window.Storage.prototype.setItem;
+  let writes = 0;
+  t.mock.method(dom.window.Storage.prototype, 'setItem', function (this: Storage, key: string, value: string) {
+    if (key === INSTRUCTION_LIST_STORAGE_KEY) writes += 1;
+    originalSet.call(this, key, value);
+  });
+  await click(get<HTMLButtonElement>(`[aria-label="编辑备注 ${target.instructionNo}"]`));
+  assert.equal(get('#instruction-list-dialog-title', dialog()).textContent, '编辑备注');
+  assert.equal(field('备注', dialog()).tagName, 'TEXTAREA');
+  assert.equal(field('备注', dialog()).value, target.remark);
+  assert.equal(dialog().querySelectorAll('textarea').length, 1, 'only the ordinary note is editable');
+  assert.equal(writes, 0, 'opening an editor must not save');
+  await setValue(field('备注', dialog()), '更新后的仓库备注\n核对标签后放行');
+  await click(button('保存备注', dialog()));
+  assert.equal(dom.window.document.querySelector('[role="dialog"]'), null);
+  assert.equal(writes, 1, 'the note and its log must use one serialized save');
+  const changed = stored().records[0];
+  assert.equal(changed.remark, '更新后的仓库备注\n核对标签后放行');
+  assert.deepEqual({ ...changed, remark: target.remark, updated: target.updated }, target);
+  assert.equal(stored().logs.length, 1);
+  assert.equal(stored().logs[0].action, '修改备注');
+  assert.equal(stored().logs[0].before, target.remark);
+  assert.equal(stored().logs[0].after, changed.remark);
+  await remount();
+  assert.ok(cell(rowFor(target.instructionNo), '备注').textContent?.includes(changed.remark));
+  assert.equal(cell(rowFor(target.instructionNo), '客户备注').textContent, target.customerRemark);
+  await click(get<HTMLButtonElement>(`[aria-label="查看指令 ${target.instructionNo}"]`));
+  assert.ok(dialog().textContent?.includes(changed.remark));
+  await click(button('查看日志', dialog()));
+  assert.ok(dialog().textContent?.includes('修改备注'));
+  assert.ok(dialog().textContent?.includes(target.remark));
+  assert.ok(dialog().textContent?.includes(changed.remark));
+});
+
+test('failed ordinary remark saves keep the draft without false success and stale notes cannot overwrite a newer edit', async (t) => {
+  const target = { ...INITIAL_INSTRUCTION_LIST_RECORDS.find(row => row.tab === '待确认')!, customerRemark: '客户备注保持不变', remark: '最初备注' };
+  saveFixture([target]);
+  await remount();
+  const initialStorage = dom.window.localStorage.getItem(INSTRUCTION_LIST_STORAGE_KEY);
+  const originalSet = dom.window.Storage.prototype.setItem;
+  const mockedSet = t.mock.method(dom.window.Storage.prototype, 'setItem', function (this: Storage, key: string, value: string) {
+    if (key === INSTRUCTION_LIST_STORAGE_KEY) throw new Error('QuotaExceededError');
+    originalSet.call(this, key, value);
+  });
+  await click(get<HTMLButtonElement>(`[aria-label="编辑备注 ${target.instructionNo}"]`));
+  await setValue(field('备注', dialog()), '尚未成功保存的备注');
+  await click(button('保存备注', dialog()));
+  assert.ok(get('[role="alert"]', dialog()).textContent);
+  assert.equal(field('备注', dialog()).value, '尚未成功保存的备注');
+  assert.equal(dom.window.localStorage.getItem(INSTRUCTION_LIST_STORAGE_KEY), initialStorage);
+  assert.equal(dom.window.document.querySelector('[role="status"]'), null);
+  await click(button('返回', dialog()));
+  assert.ok(cell(rowFor(target.instructionNo), '备注').textContent?.includes(target.remark));
+  mockedSet.mock.restore();
+
+  await click(get<HTMLButtonElement>(`[aria-label="编辑备注 ${target.instructionNo}"]`));
+  await setValue(field('备注', dialog()), '过期窗口中的修改');
+  const newer = { records: [{ ...target, remark: '另一个窗口已经更新的备注', updated: '2026-10-20 12:45:00' }], logs: [] };
+  dom.window.localStorage.setItem(INSTRUCTION_LIST_STORAGE_KEY, JSON.stringify(newer));
+  await click(button('保存备注', dialog()));
+  assert.ok(get('[role="alert"]', dialog()).textContent);
+  assert.deepEqual(stored(), newer, 'a conflicting newer note must not be overwritten or generate a success log');
+  assert.equal(dom.window.document.querySelector('[role="status"]'), null);
+});
+
+test('the matching waybill customer remark takes precedence including an empty source and remains unchanged by ordinary note editing', async () => {
+  const target = { ...INITIAL_INSTRUCTION_LIST_RECORDS.find(row => row.tab === '待确认')!, customerRemark: '旧指令中的客户要求', remark: '' };
+  saveFixture([target]);
+  const source = [{ waybillNo: target.waybill, clientRemark: '运单中的最新客户要求' }, { waybillNo: `${target.waybill}-OTHER`, clientRemark: '不能错用其他运单备注' }];
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  await act(async () => root.render(<React.StrictMode><InstructionListPage waybills={source} /></React.StrictMode>));
+  assert.equal(cell(rowFor(target.instructionNo), '客户备注').textContent, source[0].clientRemark);
+  await click(get<HTMLButtonElement>(`[aria-label="编辑备注 ${target.instructionNo}"]`));
+  await setValue(field('备注', dialog()), '与客户要求独立的备注');
+  await click(button('保存备注', dialog()));
+  assert.equal(source[0].clientRemark, '运单中的最新客户要求');
+  assert.equal(cell(rowFor(target.instructionNo), '客户备注').textContent, source[0].clientRemark);
+  await act(async () => root.render(<React.StrictMode><InstructionListPage waybills={[{ waybillNo: target.waybill, clientRemark: '' }]} /></React.StrictMode>));
+  assert.equal(cell(rowFor(target.instructionNo), '客户备注').textContent, '—', 'an explicitly empty source must not revive an old customer note');
+  await click(get<HTMLButtonElement>(`[aria-label="查看指令 ${target.instructionNo}"]`));
+  const customerCell = get('[aria-label="运单信息"] dl', dialog()).children[1];
+  assert.equal(get('dd', customerCell).textContent, '—');
+});
+
+test('existing column preferences gain both remark fields once and later user choices remain respected', async () => {
+  dom.window.localStorage.setItem(columnKey, JSON.stringify(['names', 'packages']));
+  await remount();
+  for (const label of ['指令名称', '发货件数', '客户备注', '备注']) assert.ok(headers().includes(label));
+  assert.ok(!headers().includes('指令费用'), 'migration must preserve the existing choice of other hidden fields');
+  await click(get<HTMLButtonElement>('[aria-label="指令列表设置"]'));
+  await click(field('客户备注') as HTMLInputElement);
+  await click(field('备注') as HTMLInputElement);
+  assert.ok(!headers().includes('客户备注'));
+  assert.ok(!headers().includes('备注'));
+  await remount();
+  assert.ok(!headers().includes('客户备注'), 'the one-time migration must not reverse an intentional hide on reload');
+  assert.ok(!headers().includes('备注'));
+  assert.ok(headers().includes('发货件数'));
+});

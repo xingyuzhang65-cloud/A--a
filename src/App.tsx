@@ -362,7 +362,7 @@ export default function App() {
               </motion.div>
             ) : currentTab === 'instruction-list' ? (
               <motion.div key="instruction-list" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="h-full min-h-[500px]">
-                <InstructionListPage />
+                <InstructionListPage waybills={waybills} />
               </motion.div>
             ) : currentTab === 'instruction-management' ? (
               <motion.div key="instruction-management" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="h-full min-h-[500px]">

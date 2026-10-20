@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import {
   EMPTY_INSTRUCTION_LIST_FILTERS, INITIAL_INSTRUCTION_LIST_RECORDS, INSTRUCTION_LIST_STORAGE_KEY, INSTRUCTION_LIST_TABS,
   displayInstructionStatus, exportInstructionListCsv, filterInstructionList, getInstructionFailureReason,
-  loadInstructionListState, persistInstructionListState, transitionInstructionList,
+  loadInstructionListState, persistInstructionListState, transitionInstructionList, updateInstructionRemark,
 } from './instructionListData';
 import { INITIAL_STAGING_RECORDS } from './stagingData';
 
@@ -162,4 +162,59 @@ test('CSV includes all business fields, original currency, readable results, esc
   assert.ok(csv.includes('"\' =1+1 / 第二个指令"'));
   assert.ok(csv.includes('"多行,""备注""\n下一行"'));
   assert.ok(csv.endsWith('\r\n'));
+});
+
+test('legacy instruction records gain an empty customer remark without replacing workflow, notes or logs', () => {
+  const storage = memoryStorage();
+  const seed = { ...INITIAL_INSTRUCTION_LIST_RECORDS.find(row => row.tab === '待确认')!, remark: '历史内部备注，请保留' };
+  const confirmed = transitionInstructionList({ records: [seed], logs: [] }, [seed.id], 'confirm', '2026-10-20T02:03:04.000Z');
+  const legacyRecords = confirmed.records.map(row => Object.fromEntries(Object.entries(row).filter(([key]) => key !== 'customerRemark')));
+  storage.values.set(INSTRUCTION_LIST_STORAGE_KEY, JSON.stringify({ records: legacyRecords, logs: confirmed.logs }));
+  const loaded = loadInstructionListState(storage);
+  assert.equal(loaded.records.length, 1, 'migration must not reset saved data to the demo catalog');
+  assert.deepEqual(loaded.records, confirmed.records.map(row => ({ ...row, customerRemark: '' })));
+  assert.deepEqual(loaded.logs, confirmed.logs);
+  assert.equal(storage.writes.length, 0, 'loading a legacy record must not silently write storage');
+  persistInstructionListState(loaded, storage);
+  assert.deepEqual(loadInstructionListState(storage), loaded);
+});
+
+test('editing an ordinary remark preserves customer remarks and workflow while saving an auditable atomic change', () => {
+  const first = { ...INITIAL_INSTRUCTION_LIST_RECORDS[0], customerRemark: '客户要求：外箱保持完整', remark: '原内部备注' };
+  const untouched = { ...INITIAL_INSTRUCTION_LIST_RECORDS[1], customerRemark: '另一票客户要求', remark: '另一票备注' };
+  const state = { records: [first, untouched], logs: [] };
+  const original = JSON.stringify(state);
+  const timestamp = '2026-10-20T02:03:04.000Z';
+  const changed = updateInstructionRemark(state, first.id, '补充处理要求\n核对后执行', timestamp, '备注操作员');
+  const actual = changed.records[0];
+  assert.deepEqual({ ...actual, remark: first.remark, updated: first.updated }, first, 'only the ordinary remark and modification time may change');
+  assert.equal(actual.remark, '补充处理要求\n核对后执行');
+  assert.equal(new Date(actual.updated).getTime(), Date.parse(timestamp));
+  assert.equal(changed.records[1], untouched);
+  assert.equal(JSON.stringify(state), original);
+  assert.equal(changed.logs.length, 1);
+  assert.deepEqual({ recordId: changed.logs[0].recordId, action: changed.logs[0].action, before: changed.logs[0].before, after: changed.logs[0].after, operator: changed.logs[0].operator }, {
+    recordId: first.id, action: '修改备注', before: first.remark, after: actual.remark, operator: '备注操作员',
+  });
+  assert.equal(new Date(changed.logs[0].timestamp).getTime(), Date.parse(timestamp));
+  assert.equal(updateInstructionRemark(changed, first.id, actual.remark), changed, 'an unchanged remark must not add an audit entry');
+  assert.throws(() => updateInstructionRemark(changed, 'missing-instruction', '不能新增记录'), RangeError);
+  const storage = memoryStorage();
+  persistInstructionListState(changed, storage);
+  assert.equal(storage.writes.length, 1);
+  assert.deepEqual(loadInstructionListState(storage), changed);
+  const cleared = updateInstructionRemark(changed, first.id, '', '2026-10-20T02:04:05.000Z');
+  assert.equal(cleared.records[0].remark, '');
+  assert.equal(cleared.records[0].customerRemark, first.customerRemark);
+  assert.equal(cleared.logs.length, 2, 'clearing a note is an auditable edit');
+});
+
+test('CSV exports customer remarks beside shipped quantities and keeps ordinary remarks separate', () => {
+  const row = { ...INITIAL_INSTRUCTION_LIST_RECORDS[0], customerRemark: '=客户要求,"易碎"\n轻放', remark: '仓库内部处理记录' };
+  const csv = exportInstructionListCsv([row]);
+  const header = csv.slice(1).split('\r\n')[0];
+  assert.ok(header.includes('"发货件数","客户备注"'));
+  assert.ok(header.includes('"备注"'));
+  assert.ok(csv.includes('"\'=客户要求,""易碎""\n轻放"'), 'customer remark must receive CSV escaping and formula protection');
+  assert.ok(csv.includes('"仓库内部处理记录"'));
 });

@@ -26,6 +26,7 @@ export interface InstructionListRecord {
   fee: number;
   currency: string;
   packages: number;
+  customerRemark: string;
   weight: number;
   volume: number;
   arrived: '是' | '否';
@@ -79,7 +80,7 @@ export const EMPTY_INSTRUCTION_LIST_FILTERS: InstructionListFilters = {
   warehouse: '', orderType: '', instructionType: '', arrived: '', dateFrom: '', dateTo: '',
 };
 
-type OptionalSeedKey = 'currency' | 'processingResult' | 'failureReason' | 'photo' | 'interceptReason' | 'expectedPickupTime' | 'pickupContact' | 'pickupPhone' | 'remark' | 'palletLabel' | 'sourceOrderId' | 'sourceRecordId';
+type OptionalSeedKey = 'currency' | 'processingResult' | 'failureReason' | 'photo' | 'interceptReason' | 'expectedPickupTime' | 'pickupContact' | 'pickupPhone' | 'customerRemark' | 'remark' | 'palletLabel' | 'sourceOrderId' | 'sourceRecordId';
 type InstructionListSeed = Omit<InstructionListRecord, OptionalSeedKey | 'fee' | 'packages' | 'weight' | 'volume'> &
   Partial<Pick<InstructionListRecord, OptionalSeedKey>> & { fee: string; packages: string; weight: string; volume: string };
 
@@ -141,7 +142,7 @@ const referenceSeeds: InstructionListSeed[] = [
 
 export const INITIAL_INSTRUCTION_LIST_RECORDS: InstructionListRecord[] = referenceSeeds.map(seed => ({
   currency: 'CNY', processingResult: '', failureReason: '', photo: '', interceptReason: '', expectedPickupTime: '',
-  pickupContact: '', pickupPhone: '', remark: '', palletLabel: '', sourceOrderId: '', sourceRecordId: '',
+  pickupContact: '', pickupPhone: '', customerRemark: '', remark: '', palletLabel: '', sourceOrderId: '', sourceRecordId: '',
   ...seed,
   // Only release instructions in the reference have shipment/address fields.
   ...(seed.instructionType === '放货' ? {} : { shipment: '-', reference: '-', warehouse: '-', zip: '-', orderType: '-' }),
@@ -197,7 +198,7 @@ const csvFields: [keyof InstructionListRecord, string][] = [
   ['status', '指令处理状态'], ['processingResult', '处理结果'], ['failureReason', '失败原因'], ['photo', '指令操作图片'],
   ['customer', '客户简称'], ['warehouse', '仓库代码'], ['zip', '邮编'], ['orderType', '下单类型'], ['instructionType', '指令单类型'],
   ['interceptReason', '拦截原因'], ['destination', '目的地'], ['salesman', '业务员'], ['merchandiser', '跟单员'],
-  ['fee', '指令费用'], ['currency', '币种'], ['packages', '发货件数'], ['weight', '重量（kg）'], ['volume', '方数（m³）'],
+  ['fee', '指令费用'], ['currency', '币种'], ['packages', '发货件数'], ['customerRemark', '客户备注'], ['weight', '重量（kg）'], ['volume', '方数（m³）'],
   ['arrived', '是否到达海外仓'], ['overseasTime', '入仓时间（海外仓）'], ['expectedPickupTime', '预计提货时间'],
   ['pickupContact', '提货联系人'], ['pickupPhone', '提货联系电话'], ['remark', '备注'], ['palletLabel', '托盘标签'],
   ['sourceOrderId', '来源作业订单ID'], ['sourceRecordId', '来源暂存记录ID'],
@@ -279,6 +280,7 @@ function stagingInstruction(order: unknown, records: unknown[]): InstructionList
     orderType: '', instructionType: '作业', interceptReason: '', destination: String(source.destination), salesman: '', merchandiser: '',
     fee, currency: String(order.currency), packages: Number(source.boxCount), weight: Number(source.weight), volume: Number(source.volume),
     arrived: source.inboundTime ? '是' : '否', overseasTime: String(source.inboundTime), expectedPickupTime: '', pickupContact: '', pickupPhone: '',
+    customerRemark: typeof source.customerRemark === 'string' ? source.customerRemark : '',
     remark: typeof order.remark === 'string' ? order.remark : '', palletLabel: String(source.palletLabel), sourceOrderId: String(order.id), sourceRecordId: String(order.recordId),
   };
 }
@@ -286,8 +288,12 @@ function stagingInstruction(order: unknown, records: unknown[]): InstructionList
 /** Merge new local staging orders by stable source ID; never replace or revive a saved instruction. */
 export function loadInstructionListState(storage: Pick<Storage, 'getItem'> = globalThis.localStorage): InstructionListState {
   const saved = readStored(storage, INSTRUCTION_LIST_STORAGE_KEY);
-  const state: InstructionListState = isObject(saved) && validRecords(saved.records)
-    ? { records: saved.records, logs: Array.isArray(saved.logs) ? saved.logs.filter(validLog) : [] }
+  // This additive field must not invalidate earlier saved instructions or their workflow history.
+  const savedRecords = isObject(saved) && Array.isArray(saved.records)
+    ? saved.records.map(row => isObject(row) && !('customerRemark' in row) ? { ...row, customerRemark: '' } : row)
+    : null;
+  const state: InstructionListState = isObject(saved) && validRecords(savedRecords)
+    ? { records: savedRecords, logs: Array.isArray(saved.logs) ? saved.logs.filter(validLog) : [] }
     : { records: INITIAL_INSTRUCTION_LIST_RECORDS.map(row => ({ ...row, names: [...row.names] })), logs: [] };
   const staging = readStored(storage, 'ans_staging_management_v1');
   if (!isObject(staging) || !Array.isArray(staging.records) || !Array.isArray(staging.orders)) return state;
@@ -323,6 +329,24 @@ export function loadInstructionListState(storage: Pick<Storage, 'getItem'> = glo
 export function persistInstructionListState(state: InstructionListState, storage: Pick<Storage, 'setItem'> = globalThis.localStorage): void {
   if (!isObject(state) || !validRecords(state.records) || !Array.isArray(state.logs) || !state.logs.every(validLog)) throw new TypeError('指令列表数据无效');
   storage.setItem(INSTRUCTION_LIST_STORAGE_KEY, JSON.stringify(state));
+}
+
+/** Staff notes are editable independently of the read-only customer note and workflow phase. */
+export function updateInstructionRemark(state: InstructionListState, id: string, remark: string, timestamp = new Date().toISOString(), operator = '天朗'): InstructionListState {
+  if (typeof id !== 'string' || !id.trim()) throw new TypeError('指令记录ID无效');
+  if (typeof remark !== 'string') throw new TypeError('备注必须为文本');
+  if (typeof timestamp !== 'string' || typeof operator !== 'string') throw new TypeError('备注操作信息无效');
+  const row = state.records.find(record => record.id === id);
+  if (!row) throw new RangeError('指令记录不存在');
+  if (row.remark === remark) return state;
+  const updated = localTimestamp(timestamp);
+  const next: InstructionListRecord = { ...row, remark, updated };
+  const log: InstructionListLog = {
+    id: `${row.id}-remark-${new Date(timestamp).getTime()}-${state.logs.length + 1}`,
+    recordId: row.id, instructionNo: row.instructionNo, timestamp: updated, operator,
+    action: '修改备注', before: row.remark, after: remark, detail: `${row.instructionNo}：修改备注`,
+  };
+  return { records: state.records.map(record => record.id === id ? next : record), logs: [...state.logs, log] };
 }
 
 /** Approval and confirmation change workflow phase only; warehouse processing results are kept intact. */
