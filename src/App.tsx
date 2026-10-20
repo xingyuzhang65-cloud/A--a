@@ -10,6 +10,7 @@ import AssistantBot from './components/AssistantBot';
 import InvoiceModal from './components/InvoiceModal';
 import ManagementCenter, { DEFAULT_MANAGEMENT_USERS } from './components/ManagementCenter';
 import InstructionManagement from './components/InstructionManagement';
+import InstructionListPage from './components/InstructionListPage';
 import StagingManagement from './components/StagingManagement';
 import { INITIAL_WAYBILLS } from './data';
 import { Waybill, FilterParams, WaybillStatus, User } from './types';
@@ -20,7 +21,7 @@ import { appendTradeModeLog, seedTradeModeLogs } from './components/TradeModeLog
 export default function App() {
   const [currentTab, setCurrentTab] = useState<string>(() => {
     const hashTab = window.location.hash.slice(1);
-    return ['instruction-management', 'staging-management'].includes(hashTab) ? hashTab : 'waybills';
+    return ['instruction-list', 'instruction-management', 'staging-management'].includes(hashTab) ? hashTab : 'waybills';
   });
   const [globalNav, setGlobalNav] = useState<string>('waybill-manage');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
@@ -28,14 +29,14 @@ export default function App() {
   const navigateTab = (tab: string) => {
     setCurrentTab(tab);
     setGlobalNav(tab.startsWith('management-') ? 'admin-center' : 'waybill-manage');
-    const hash = ['instruction-management', 'staging-management'].includes(tab) ? `#${tab}` : '';
+    const hash = ['instruction-list', 'instruction-management', 'staging-management'].includes(tab) ? `#${tab}` : '';
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${hash}`);
   };
 
   useEffect(() => {
     const handleHashChange = () => {
       const hashTab = window.location.hash.slice(1);
-      if (['instruction-management', 'staging-management'].includes(hashTab)) {
+      if (['instruction-list', 'instruction-management', 'staging-management'].includes(hashTab)) {
         setCurrentTab(hashTab);
         setGlobalNav('waybill-manage');
       } else if (!window.location.hash) {
@@ -312,6 +313,12 @@ export default function App() {
             }`}>
               业务运单监控 <span className="text-[10px] opacity-70">×</span>
             </button>
+            {currentTab === 'instruction-list' && (
+              <div className="px-4 h-8 text-xs font-bold rounded-md flex items-center gap-2.5 bg-[#5c67f2] text-white shadow-sm shrink-0">
+                指令列表
+                <button type="button" aria-label="关闭指令列表页签" onClick={() => navigateTab('waybills')} className="text-[12px] opacity-70 hover:opacity-100 cursor-pointer">×</button>
+              </div>
+            )}
             {currentTab === 'instruction-management' && (
               <div className="px-4 h-8 text-xs font-bold rounded-md flex items-center gap-2.5 bg-[#5c67f2] text-white shadow-sm shrink-0">
                 指令管理
@@ -352,6 +359,10 @@ export default function App() {
                 className="h-full"
               >
                 <ManagementCenter users={users} onAddUser={() => setShowAddUserModal(true)} onUsersChange={handleUsersChange} />
+              </motion.div>
+            ) : currentTab === 'instruction-list' ? (
+              <motion.div key="instruction-list" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="h-full min-h-[500px]">
+                <InstructionListPage />
               </motion.div>
             ) : currentTab === 'instruction-management' ? (
               <motion.div key="instruction-management" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="h-full min-h-[500px]">
