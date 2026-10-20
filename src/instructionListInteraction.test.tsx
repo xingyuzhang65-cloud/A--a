@@ -249,7 +249,7 @@ test('confirm and cancel move only pending instructions, persist audit logs, and
   assert.equal(button('取消下单').disabled, true);
 });
 
-test('a failed state write retains the confirmation dialog and selection without a false success', async (t) => {
+test('a failed state write retains the confirmation or batch approval dialog and selection without a false success', async (t) => {
   const target = INITIAL_INSTRUCTION_LIST_RECORDS.find(row => row.tab === '待确认')!;
   const originalSet = dom.window.Storage.prototype.setItem;
   t.mock.method(dom.window.Storage.prototype, 'setItem', function (this: Storage, key: string, value: string) {
@@ -257,16 +257,79 @@ test('a failed state write retains the confirmation dialog and selection without
     originalSet.call(this, key, value);
   });
   await click(selectRow(0));
-  await click(button('已确认'));
-  await submit(get<HTMLFormElement>('form', dialog()));
-  assert.ok(get('[role="alert"]', dialog()).textContent?.includes('本地存储不可用或空间不足'));
-  assert.equal(dom.window.localStorage.getItem(INSTRUCTION_LIST_STORAGE_KEY), null);
-  assert.equal(dom.window.document.querySelector('[role="status"]'), null);
-  assert.ok(get<HTMLInputElement>(`[aria-label="选择指令单 ${target.instructionNo}"]`).checked);
-  assert.ok(rowFor(target.instructionNo));
-  await click(button('返回', dialog()));
+  for (const action of ['已确认', '批量审批']) {
+    await click(button(action));
+    await submit(get<HTMLFormElement>('form', dialog()));
+    assert.ok(get('[role="alert"]', dialog()).textContent?.includes('本地存储不可用或空间不足'));
+    assert.equal(dom.window.localStorage.getItem(INSTRUCTION_LIST_STORAGE_KEY), null);
+    assert.equal(dom.window.document.querySelector('[role="status"]'), null);
+    assert.ok(get<HTMLInputElement>(`[aria-label="选择指令单 ${target.instructionNo}"]`).checked);
+    assert.ok(rowFor(target.instructionNo));
+    await click(button('返回', dialog()));
+  }
   await click(button('查看日志'));
   assert.ok(dialog().textContent?.includes('暂无操作日志'));
+});
+
+test('batch approval selects across pages, rejects stale selections atomically, and persists only the chosen approvals', async () => {
+  const pending = INITIAL_INSTRUCTION_LIST_RECORDS.filter(row => row.tab === '待确认');
+  assert.ok(pending.length > 11);
+  assert.equal(button('批量审批').disabled, true);
+  await setValue(get<HTMLSelectElement>('[aria-label="指令列表每页条数"]'), '10');
+  await click(get<HTMLInputElement>('[aria-label="选择本页全部指令单"]'));
+  await click(get<HTMLButtonElement>('[aria-label="指令列表下一页"]'));
+  await click(selectRow(0));
+  const chosen = pending.slice(0, 11);
+  assert.equal(button('批量审批').disabled, false);
+  await click(button('批量审批'));
+  assert.equal(get('#instruction-list-dialog-title', dialog()).textContent, '批量审批');
+  assert.ok(dialog().textContent?.includes('11'));
+  for (const row of chosen) assert.ok(dialog().textContent?.includes(row.instructionNo));
+  assert.ok(!dialog().textContent?.includes(pending[11].instructionNo));
+  assert.ok(button('审批通过', dialog()));
+  assert.equal(dom.window.localStorage.getItem(INSTRUCTION_LIST_STORAGE_KEY), null, 'opening batch approval must not persist changes');
+
+  const stale = {
+    records: INITIAL_INSTRUCTION_LIST_RECORDS.map(row => row.id === chosen[0].id ? { ...row, tab: '已确认' as const } : row), logs: [],
+  };
+  dom.window.localStorage.setItem(INSTRUCTION_LIST_STORAGE_KEY, JSON.stringify(stale));
+  await submit(get<HTMLFormElement>('form', dialog()));
+  assert.ok(get('[role="alert"]', dialog()).textContent?.includes('所选指令状态已变更'));
+  assert.deepEqual(stored(), stale, 'a stale row must prevent approvals and logs for the entire selection');
+  assert.equal(dom.window.document.querySelector('[role="status"]'), null);
+  await click(button('返回', dialog()));
+
+  saveFixture(INITIAL_INSTRUCTION_LIST_RECORDS);
+  await remount();
+  await setValue(get<HTMLSelectElement>('[aria-label="指令列表每页条数"]'), '10');
+  await click(get<HTMLInputElement>('[aria-label="选择本页全部指令单"]'));
+  await click(get<HTMLButtonElement>('[aria-label="指令列表下一页"]'));
+  await click(selectRow(0));
+  await click(button('批量审批'));
+  await click(button('审批通过', dialog()));
+  assert.equal(dom.window.document.querySelector('[role="dialog"]'), null);
+  const expectedIds = new Set(chosen.map(row => row.id));
+  for (const original of INITIAL_INSTRUCTION_LIST_RECORDS) {
+    const actual = stored().records.find(row => row.id === original.id)!;
+    if (expectedIds.has(original.id)) assert.deepEqual([actual.tab, actual.status], ['已确认', original.status]);
+    else assert.deepEqual(actual, original, 'unselected or already processed instructions must remain unchanged');
+  }
+  assert.equal(stored().logs.length, 11);
+  assert.deepEqual(new Set(stored().logs.map(log => log.recordId)), expectedIds);
+  assert.ok(stored().logs.every(log => log.action === '批量审批'));
+  assert.equal(button('批量审批').disabled, true);
+  await remount();
+  assert.equal(tab('待确认').textContent, `待确认${pending.length - 11}`);
+  assert.equal(button('批量审批').disabled, true);
+  await click(tab('已确认'));
+  assert.ok(![...host.querySelectorAll('button')].some(item => item.textContent?.trim() === '批量审批'), 'batch approval must only appear on the pending tab');
+  await allRows();
+  for (const row of chosen) assert.ok(rowFor(row.instructionNo));
+  await click(get<HTMLInputElement>(`[aria-label="选择指令单 ${chosen[0].instructionNo}"]`));
+  await click(button('查看日志'));
+  assert.ok(dialog().textContent?.includes('批量审批'));
+  assert.ok(dialog().textContent?.includes(chosen[0].instructionNo));
+  assert.ok(!dialog().textContent?.includes(chosen[1].instructionNo));
 });
 
 test('existing staging orders appear with native currency totals and are not revived after approval', async () => {

@@ -325,9 +325,9 @@ export function persistInstructionListState(state: InstructionListState, storage
   storage.setItem(INSTRUCTION_LIST_STORAGE_KEY, JSON.stringify(state));
 }
 
-/** Confirmation changes workflow phase only; warehouse processing results are kept intact. */
-export function transitionInstructionList(state: InstructionListState, ids: string[], action: 'confirm' | 'cancel', timestamp = new Date().toISOString(), operator = '天朗'): InstructionListState {
-  if (action !== 'confirm' && action !== 'cancel') throw new TypeError('不支持的指令操作');
+/** Approval and confirmation change workflow phase only; warehouse processing results are kept intact. */
+export function transitionInstructionList(state: InstructionListState, ids: string[], action: 'approve' | 'confirm' | 'cancel', timestamp = new Date().toISOString(), operator = '天朗'): InstructionListState {
+  if (action !== 'approve' && action !== 'confirm' && action !== 'cancel') throw new TypeError('不支持的指令操作');
   const selected = new Set(ids);
   const eligible = state.records.some(row => selected.has(row.id) && row.tab === '待确认');
   if (!eligible) return state;
@@ -335,11 +335,11 @@ export function transitionInstructionList(state: InstructionListState, ids: stri
   const logs: InstructionListLog[] = [];
   const records = state.records.map(row => {
     if (!selected.has(row.id) || row.tab !== '待确认') return row;
-    const next: InstructionListRecord = { ...row, tab: action === 'confirm' ? '已确认' : '取消', status: action === 'cancel' ? '已取消' : row.status, updated };
+    const next: InstructionListRecord = { ...row, tab: action === 'cancel' ? '取消' : '已确认', status: action === 'cancel' ? '已取消' : row.status, updated };
     logs.push({
       id: `${row.id}-${action}-${new Date(timestamp).getTime()}`, recordId: row.id, instructionNo: row.instructionNo, timestamp: updated, operator,
-      action: action === 'confirm' ? '确认下单' : '取消下单', before: `${row.tab} / ${row.status}`, after: `${next.tab} / ${next.status}`,
-      detail: `${row.instructionNo}：${action === 'confirm' ? '已确认，保留海外仓原处理状态' : '已取消待确认指令'}`,
+      action: action === 'approve' ? '批量审批' : action === 'confirm' ? '确认下单' : '取消下单', before: `${row.tab} / ${row.status}`, after: `${next.tab} / ${next.status}`,
+      detail: `${row.instructionNo}：${action === 'approve' ? '审批通过，已进入已确认，保留海外仓原处理状态' : action === 'confirm' ? '已确认，保留海外仓原处理状态' : '已取消待确认指令'}`,
     });
     return next;
   });

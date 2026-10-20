@@ -85,6 +85,28 @@ test('confirmation changes phase without claiming warehouse completion; cancella
   assert.equal(cancelled.logs.length, 1);
 });
 
+test('batch approval changes only selected pending instructions with one audit entry each and preserves warehouse status', () => {
+  const seed = INITIAL_INSTRUCTION_LIST_RECORDS.find(row => row.tab === '待确认')!;
+  const first = { ...seed, id: 'approve-first', instructionNo: 'CI-APPROVE-FIRST', status: '待处理' };
+  const second = { ...seed, id: 'approve-second', instructionNo: 'CI-APPROVE-SECOND', status: '待海外仓回传' };
+  const unselected = { ...seed, id: 'approve-unselected' };
+  const complete = INITIAL_INSTRUCTION_LIST_RECORDS.find(row => row.tab === '已完成')!;
+  const state = { records: [first, second, unselected, complete], logs: [] };
+  const original = JSON.stringify(state);
+  const approved = transitionInstructionList(state, [first.id, second.id, first.id, complete.id, 'missing'], 'approve', '2026-10-20T01:02:03.000Z', '审批操作员');
+  assert.deepEqual(approved.records.slice(0, 2).map(row => [row.tab, row.status]), [['已确认', first.status], ['已确认', second.status]]);
+  assert.equal(approved.records[2], unselected);
+  assert.equal(approved.records[3], complete);
+  assert.deepEqual(approved.logs.map(log => [log.recordId, log.action, log.operator]), [[first.id, '批量审批', '审批操作员'], [second.id, '批量审批', '审批操作员']]);
+  assert.ok(approved.logs.every(log => new Date(log.timestamp).getTime() === Date.parse('2026-10-20T01:02:03.000Z')));
+  assert.equal(JSON.stringify(state), original);
+  assert.equal(transitionInstructionList(approved, [first.id, second.id, complete.id], 'approve'), approved, 'already processed records must not produce another approval or log');
+  const storage = memoryStorage();
+  persistInstructionListState(approved, storage);
+  assert.deepEqual(loadInstructionListState(storage), approved);
+  assert.equal(storage.writes.length, 1, 'records and approval logs are persisted atomically');
+});
+
 test('staging orders merge idempotently with original currency, precise totals, actual creation logs and persistent cancellations', () => {
   const storage = memoryStorage();
   const source = INITIAL_STAGING_RECORDS[0];
