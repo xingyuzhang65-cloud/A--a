@@ -1,0 +1,372 @@
+.mc-btn {
+  height: 29px;
+  padding: 0 14px;
+  border: 1px solid #dce2e7;
+  border-radius: 2px;
+  color: #4c5863;
+  background: #fff;
+}
+
+.mc-btn:hover:not(:disabled) {
+  border-color: #95c8f3;
+  color: #168ff5;
+}
+
+.mc-btn.primary {
+  border-color: #168ff5;
+  color: #fff;
+  background: #168ff5;
+}
+
+.mc-btn.danger {
+  border-color: #e5484d;
+  color: #e5484d;
+  background: #fff;
+}
+
+.mc-btn.danger:hover:not(:disabled) {
+  border-color: #c92f36;
+  color: #c92f36;
+  background: #fff5f5;
+}
+
+.mc-btn:disabled {
+  cursor: not-allowed;
+  color: #a7b0b9;
+  background: #f3f5f7;
+}
+
+.mc-intercept-status {
+  display: inline-flex;
+  min-width: 62px;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.mc-intercept-status.is-pending { color: #b96d00; background: #fff7e6; }
+.mc-intercept-status.is-confirmed { color: #0369a1; background: #f0f9ff; }
+.mc-intercept-status.is-processing { color: #2563eb; background: #eff6ff; }
+.mc-intercept-status.is-success { color: #15803d; background: #ecfdf3; }
+.mc-intercept-status.is-failed { color: #dc2626; background: #fef2f2; }
+.mc-intercept-status.is-canceled { color: #64748b; background: #f1f5f9; }
+
+/* 内部备注 */
+
+/* 批量备注弹窗 */
+
+.mc-intercept-overlay {
+  position: fixed;
+  z-index: 110;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(0, 0, 0, .43);
+}
+
+.mc-intercept-drawer {
+  display: flex;
+  width: min(65vw, 1120px);
+  min-width: 880px;
+  height: 100vh;
+  flex-direction: column;
+  color: #35404a;
+  background: #fff;
+  box-shadow: -8px 0 28px rgba(0, 0, 0, .18);
+}
+
+.mc-intercept-drawer-header {
+  display: flex;
+  flex: 0 0 56px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid #e8edf1;
+}
+
+.mc-intercept-drawer-header h2,
+.mc-intercept-feedback-modal h2 {
+  margin: 0;
+  color: #17212b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mc-intercept-drawer-header p {
+  margin: 4px 0 0;
+  color: #929aa2;
+  font-size: 11px;
+}
+
+.mc-intercept-close {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  color: #68737d;
+  background: transparent;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.mc-intercept-close:hover {
+  background: #f0f3f6;
+}
+
+.mc-intercept-detail-content {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  background: #f6f8fa;
+}
+
+.mc-intercept-detail-card {
+  margin: 14px 14px 0;
+  padding: 16px 18px;
+  border: 1px solid #e6ebef;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+}
+
+.mc-intercept-detail-card:last-child {
+  margin-bottom: 14px;
+}
+
+.mc-intercept-detail-card-title {
+  margin: 0 0 14px;
+  color: #26323d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mc-intercept-detail-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* Tab 栏样式（参考海外中转单） */
+.mc-intercept-detail-tabs {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 14px 14px 0;
+  padding: 0 14px;
+  border-bottom: 1px solid #e8edf1;
+  background: #fff;
+}
+
+.mc-intercept-detail-tab {
+  position: relative;
+  padding: 12px 4px;
+  border: 0;
+  color: #6b7580;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mc-intercept-detail-tab:hover {
+  color: #168ff5;
+}
+
+.mc-intercept-detail-tab.active {
+  color: #168ff5;
+}
+
+.mc-intercept-detail-tab-indicator {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: #168ff5;
+}
+
+/* 基础信息：参考业务抽屉的横向键值排版 */
+.mc-intercept-basic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 26px;
+  margin: 0;
+}
+
+.mc-intercept-detail-field {
+  display: grid;
+  min-height: 32px;
+  min-width: 0;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 11px;
+}
+
+.mc-intercept-detail-field dt {
+  color: #7c8791;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.mc-intercept-detail-field dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #3c4853;
+  line-height: 18px;
+}
+
+.mc-intercept-detail-highlight {
+  color: #168ff5 !important;
+  font-weight: 700;
+}
+
+/* 费用表格 */
+
+.mc-intercept-fee-empty {
+  height: 80px !important;
+  color: #a0a8b0;
+}
+
+/* 其他信息 */
+
+.mc-intercept-cargo-box-wrap {
+  overflow: auto;
+  border: 1px solid #e1e6eb;
+  border-radius: 3px;
+}
+
+.mc-intercept-cargo-box-table {
+  width: 100%;
+  min-width: 1100px;
+  table-layout: fixed;
+  border-collapse: collapse;
+  color: #55616c;
+  font-size: 11px;
+}
+
+.mc-intercept-cargo-box-table th,
+.mc-intercept-cargo-box-table td {
+  height: 62px;
+  padding: 8px 10px;
+  border: 1px solid #e1e6eb;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.mc-intercept-cargo-box-table th {
+  height: 38px;
+  color: #46515c;
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+.mc-intercept-cargo-box-table tbody tr:nth-child(even) td {
+  background: #fbfcfd;
+}
+
+.mc-intercept-cargo-box-table th:nth-child(1) { width: 260px; }
+.mc-intercept-cargo-box-table th:nth-child(2) { width: 220px; }
+.mc-intercept-cargo-box-table th:nth-child(3) { width: 220px; }
+
+.mc-intercept-drawer-footer {
+  display: flex;
+  flex: 0 0 56px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 24px;
+  border-top: 1px solid #e8edf1;
+  background: #fff;
+}
+
+.mc-intercept-drawer-footer .mc-btn {
+  min-width: 90px;
+}
+
+.mc-intercept-feedback-overlay {
+  align-items: center;
+  justify-content: center;
+}
+
+.mc-intercept-attachment-overlay {
+  z-index: 130;
+}
+
+.mc-intercept-attachment-modal {
+  width: 520px;
+  max-width: 92vw;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, .24);
+}
+
+.mc-intercept-attachment-modal > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e8edf1;
+}
+
+.mc-intercept-attachment-modal > header h2 {
+  margin: 0;
+  color: #17212b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mc-intercept-attachment-modal > footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 14px 40px 18px;
+  border-top: 1px solid #e8edf1;
+}
+
+.mc-storage-fee-modal-actions .mc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mc-storage-fee-modal-actions .mc-intercept-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mc-storage-fee-modal-footer .mc-btn {
+  min-width: 88px;
+}
+
+@media (max-width: 1100px) {
+
+  .mc-intercept-drawer {
+    width: 100vw;
+    min-width: 0;
+  }
+
+  .mc-intercept-detail-grid,
+  .mc-intercept-basic-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+}
+
+@media (max-width: 720px) {
+  .mc-filter-grid,
+  .mc-intercept-detail-grid,
+  .mc-intercept-basic-grid {
+    grid-template-columns: 1fr;
+  }
+}

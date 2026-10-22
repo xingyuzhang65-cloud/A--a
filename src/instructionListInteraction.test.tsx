@@ -477,7 +477,7 @@ test('the overseas instruction list menu preserves order, deep links, tab closin
   const listIndex = items.findIndex(item => item.textContent === '指令列表');
   assert.ok(listIndex >= 0);
   assert.equal(items.findIndex(item => item.textContent === '指令管理'), listIndex + 1);
-  assert.equal(items.findIndex(item => item.textContent === '暂存管理'), listIndex + 2);
+  assert.equal(items.findIndex(item => item.textContent === '暂存管理'), listIndex - 1);
   assert.ok(!sidebar.textContent?.includes('中转记录'));
   await click(button('指令列表', sidebar));
   assert.equal(dom.window.location.hash, '#instruction-list');
@@ -509,61 +509,57 @@ test('the overseas instruction list menu preserves order, deep links, tab closin
   assert.equal(host.querySelector('h1'), null);
 });
 
-test('the actual staging order form flows into the instruction list with confirmation, cancellation and reload persistence', async () => {
+test('the actual staging order form supports batch ordering, prevents ordered cancellation, and persists after reload', async () => {
   const { default: App } = await import('./App');
-  saveFixture([]);
+  const { loadOverseasInventory, OVERSEAS_INVENTORY_STORAGE_KEY } = await import('./components/overseas/overseasStorageInventoryData');
+  const { loadListRows, readListState } = await import('./components/overseas/instructionListState');
   dom.window.localStorage.setItem('ans_instruction_management_v1', JSON.stringify({
     instructions: INITIAL_INSTRUCTIONS.map((row, index) => ({ ...row, price: 2.5, status: index === 0 ? '启用' : '停用' })), logs: [],
   }));
   dom.window.history.replaceState(null, '', '/A--a/#staging-management');
   await act(async () => root.render(<App />));
-  const source = INITIAL_STAGING_RECORDS[0];
-  await click(get<HTMLButtonElement>(`[aria-label="下单 ${source.palletLabel}"]`));
-  await setValue(field('指令数量', dialog()), '3');
-  await setValue(field('作业备注', dialog()), '完整流程测试：检查包装后封箱');
-  await submit(get<HTMLFormElement>('form', dialog()));
-  const sourceState = () => JSON.parse(dom.window.localStorage.getItem('ans_staging_management_v1')!);
+  const source = loadOverseasInventory().records.find(row => row.status === '暂存' && row.cargoBoxes.some(box => box.status === '待处理'))!;
+  const sourceRow = get(`[aria-label="选择${source.id}"]`).closest('tr')!;
+  await click(button('下单', sourceRow));
+  await click(field('自提', dialog()) as HTMLInputElement);
+  const box = source.cargoBoxes.find(box => box.status === '待处理')!;
+  await click(get<HTMLInputElement>(`[aria-label="选择货箱${box.boxNo}"]`, dialog()));
+  await click(button('确定', dialog()));
+  const sourceState = () => JSON.parse(dom.window.localStorage.getItem(OVERSEAS_INVENTORY_STORAGE_KEY)!);
   assert.equal(sourceState().orders.length, 1);
   const firstOrderId = sourceState().orders[0].id;
   await click(button('指令列表', get('#ans-sidebar')));
-  const first = loadInstructionListState().records.find(row => row.sourceOrderId === firstOrderId)!;
+  const first = loadListRows([]).find(row => row.id === 'release:' + firstOrderId)!;
   assert.ok(first);
-  assert.equal(rows().length, 1);
-  assert.ok(cell(rowFor(first.instructionNo), '指令费用').textContent?.includes('7.50 USD'));
-  await click(get<HTMLButtonElement>(`[aria-label="查看指令 ${first.instructionNo}"]`));
-  assert.ok(dialog().textContent?.includes(source.palletLabel));
-  assert.ok(dialog().textContent?.includes('完整流程测试：检查包装后封箱'));
-  await click(button('关闭', dialog()));
-  await click(selectRow(0));
-  await click(button('已确认'));
-  await submit(get<HTMLFormElement>('form', dialog()));
-  assert.equal(stored().records[0].tab, '已确认');
-  assert.equal(stored().records[0].status, '待处理');
-
-  await click(button('暂存管理', get('#ans-sidebar')));
-  await click(get<HTMLButtonElement>(`[aria-label="下单 ${source.palletLabel}"]`));
-  await submit(get<HTMLFormElement>('form', dialog()));
-  assert.equal(sourceState().orders.length, 2);
-  await click(button('指令列表', get('#ans-sidebar')));
-  assert.equal(rows().length, 1, 'only the newly created order should remain pending');
-  const second = loadInstructionListState().records.find(row => row.sourceOrderId !== firstOrderId)!;
-  assert.ok(second);
-  assert.ok(rowFor(second.instructionNo));
-  assert.equal(tab('已确认').textContent, '已确认1');
-  await click(selectRow(0));
-  await click(button('取消下单'));
-  await submit(get<HTMLFormElement>('form', dialog()));
-  assert.equal(rows().length, 0);
+  await click(get<HTMLInputElement>(`[aria-label="选择${first.instructionNo}"]`));
+  assert.equal([...host.querySelectorAll('button')].some(item => item.textContent === '已确认'), false);
+  await click(button('批量下单'));
+  assert.equal(readListState().rows.find(row => row.id === first.id)?.tab, '已下单');
+  assert.equal(readListState().rows.find(row => row.id === first.id)?.status, '待处理');
+  const workflowTab = (name: string) => [...host.querySelectorAll<HTMLButtonElement>('main[aria-label="指令列表"] button')].find(item => item.textContent?.startsWith(name + '('))!;
+  await click(workflowTab('已下单'));
+  await click(get<HTMLInputElement>(`[aria-label="选择${first.instructionNo}"]`));
+  assert.equal([...host.querySelectorAll('button')].some(item => item.textContent === '取消下单'), false);
+  assert.equal(readListState().rows.find(row => row.id === first.id)?.tab, '已下单');
   await act(async () => root.unmount());
   root = createRoot(host);
   await act(async () => root.render(<App />));
-  assert.equal(tab('待确认').textContent, '待确认0');
-  assert.equal(tab('已确认').textContent, '已确认1');
-  assert.equal(tab('取消').textContent, '取消1');
-  assert.equal(tab('全部').textContent, '全部2');
-  await click(tab('全部'));
-  assert.equal(rows().length, 2);
-  assert.equal(stored().logs.length, 4, 'each real creation and transition must retain one log');
+  await click(workflowTab('已下单'));
+  assert.ok(get<HTMLInputElement>(`[aria-label="选择${first.instructionNo}"]`));
+  assert.equal([...host.querySelectorAll('button')].some(item => item.textContent === '取消下单'), false);
+  assert.equal(readListState().logs.length, 1, 'only ordering is logged; ordered records cannot be cancelled');
+  assert.equal(sourceState().orders.length, 1, 'reloading must not duplicate the release');
+  await click(workflowTab('待确认'));
+  const pendingCheckboxes = [...host.querySelectorAll<HTMLInputElement>('main[aria-label="指令列表"] tbody input[type="checkbox"]')];
+  const pickedNumbers = pendingCheckboxes.slice(0, 2).map(input => input.getAttribute('aria-label')!.slice(2));
+  await click(pendingCheckboxes[0]);
+  await click(pendingCheckboxes[1]);
+  await click(button('批量驳回'));
+  const rejected = readListState().rows.filter(row => pickedNumbers.includes(row.instructionNo));
+  assert.equal(rejected.length, 2);
+  assert.ok(rejected.every(row => row.tab === '驳回' && row.status === '已驳回'));
+  assert.ok(readListState().rows.some(row => row.tab === '待确认'), 'unselected rows remain pending');
+  assert.ok(readListState().logs.at(-1)?.action.includes('2'));
 });
 
 test('customer remarks and ordinary remarks are visible columns and customer remarks share a read-only detail row with shipment quantity', async () => {

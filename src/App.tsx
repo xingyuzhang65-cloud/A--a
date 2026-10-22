@@ -10,8 +10,7 @@ import AssistantBot from './components/AssistantBot';
 import InvoiceModal from './components/InvoiceModal';
 import ManagementCenter, { DEFAULT_MANAGEMENT_USERS } from './components/ManagementCenter';
 import InstructionManagement from './components/InstructionManagement';
-import InstructionListPage from './components/InstructionListPage';
-import StagingManagement from './components/StagingManagement';
+import OverseasPage from './components/overseas/OverseasPage';
 import { INITIAL_WAYBILLS } from './data';
 import { Waybill, FilterParams, WaybillStatus, User } from './types';
 import { ShieldCheck, Info, Package, RefreshCw, Layers } from 'lucide-react';
@@ -362,7 +361,7 @@ export default function App() {
               </motion.div>
             ) : currentTab === 'instruction-list' ? (
               <motion.div key="instruction-list" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="h-full min-h-[500px]">
-                <InstructionListPage waybills={waybills} />
+                <OverseasPage view="instructions" waybills={waybills} />
               </motion.div>
             ) : currentTab === 'instruction-management' ? (
               <motion.div key="instruction-management" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="h-full min-h-[500px]">
@@ -370,7 +369,7 @@ export default function App() {
               </motion.div>
             ) : currentTab === 'staging-management' ? (
               <motion.div key="staging-management" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="h-full min-h-[500px]">
-                <StagingManagement />
+                <OverseasPage view="storage" waybills={waybills} />
               </motion.div>
             ) : currentTab === 'waybills' ? (
               <motion.div

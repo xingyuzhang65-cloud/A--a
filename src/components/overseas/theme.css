@@ -1,0 +1,50 @@
+/* Match the host application's purple accents, slate text and rounded cards. */
+.ans-overseas-page > .oi-page,
+.ans-overseas-page > main[aria-label="指令列表"] {
+  flex: 1; min-height: 0; padding: 0; background: transparent; font: inherit;
+}
+.ans-overseas-page .oi-header-tools { display: none; }
+.ans-overseas-page .sm-filters,
+.ans-overseas-page .im-list-card,
+.ans-overseas-page > main[aria-label="指令列表"] > section {
+  border: 1px solid #e2e8f0; border-radius: 8px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / .04);
+}
+.ans-overseas-page .sm-filters,
+.ans-overseas-page > main[aria-label="指令列表"] > section:first-child { padding: 20px; }
+.ans-overseas-page .sm-filter { height: auto; flex-direction: column; align-items: stretch; gap: 6px; font-size: 12px; }
+.ans-overseas-page .sm-filter > span:first-child { flex-basis: auto; color: #64748b; font-weight: 600; }
+.ans-overseas-page .sm-filter input,
+.ans-overseas-page .sm-filter select,
+.ans-overseas-page > main[aria-label="指令列表"] label input,
+.ans-overseas-page > main[aria-label="指令列表"] label select {
+  height: 34px; background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 4px; color: #475569; font-size: 12px;
+}
+.ans-overseas-page .sm-filter input:focus,
+.ans-overseas-page .sm-filter select:focus { outline: none; border-color: #5c67f2; box-shadow: 0 0 0 2px #5c67f21a; }
+.ans-overseas-page .im-button { height: 34px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.ans-overseas-page .im-list-card { padding: 0 20px; }
+.ans-overseas-page .sm-tabs { font-size: 12px; }
+.ans-overseas-page .im-table { font-size: 12px; color: #475569; }
+.ans-overseas-page .im-table th { color: #64748b; background: #f8fafc; }
+.ans-overseas-page .sm-date-filter { grid-column: span 2; }
+.ans-overseas-page button { cursor: pointer; }
+.ans-overseas-page button:disabled { cursor: not-allowed; }
+.instruction-detail-portal .mc-intercept-drawer,
+.oi-drawer, .cf-drawer { border-radius: 12px 0 0 12px; }
+.instruction-detail-portal .mc-btn { border-radius: 4px; }
+.instruction-detail-portal .mc-btn.primary,
+.instruction-detail-portal button[class*="bg-blue-"],
+.instruction-detail-portal button[class*="bg-[#004bb1]"] { background: #5c67f2; border-color: #5c67f2; }
+.instruction-detail-portal .mc-intercept-detail-tab.active,
+.instruction-detail-portal .mc-intercept-detail-highlight { color: #5c67f2; }
+.instruction-detail-portal .mc-intercept-detail-tab-indicator { background: #5c67f2; }
+.ans-overseas-page > main[aria-label="指令列表"] > section:first-child > div:first-child > label {
+  flex-direction: column; align-items: stretch; gap: 6px;
+}
+.ans-overseas-page > main[aria-label="指令列表"] > section:first-child > div:first-child > label > span:first-child { color: #64748b; }
+@media (max-width: 800px) {
+  .ans-overseas-page .sm-date-filter { grid-column: auto; }
+  .ans-overseas-page .sm-summary { gap: 8px 14px; }
+}

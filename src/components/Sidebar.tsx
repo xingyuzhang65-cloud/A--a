@@ -72,9 +72,9 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
       icon: Globe, 
       id: 'overseas-transit',
       children: [
+        { name: '暂存管理', icon: Warehouse, id: 'staging-management' },
         { name: '指令列表', icon: ClipboardList, id: 'instruction-list' },
-        { name: '指令管理', icon: FileCheck, id: 'instruction-management' },
-        { name: '暂存管理', icon: Warehouse, id: 'staging-management' }
+        { name: '指令管理', icon: FileCheck, id: 'instruction-management' }
       ]
     },
     { 

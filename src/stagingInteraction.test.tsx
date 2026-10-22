@@ -329,7 +329,7 @@ test('the overseas menu hides transit history and supports staging deep links, c
   const sidebar = get('#ans-sidebar');
   assert.ok(!sidebar.textContent?.includes('中转记录'));
   const items = [...sidebar.querySelectorAll<HTMLButtonElement>('button')];
-  assert.equal(items.findIndex(item => item.textContent === '暂存管理'), items.findIndex(item => item.textContent === '指令管理') + 1);
+  assert.equal(items.findIndex(item => item.textContent === '暂存管理'), items.findIndex(item => item.textContent === '指令管理') - 2);
   await click(button('暂存管理', sidebar));
   assert.equal(get('h1').textContent, '暂存管理');
   assert.equal(dom.window.location.hash, '#staging-management');
