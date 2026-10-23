@@ -829,7 +829,7 @@ export function getInventoryFeeCatalog(): StorageFeeLine[] {
 export function exportInventoryCsv(rows: InventoryRecord[]): string {
   const columns: [keyof InventoryRecord,string][]=[
     ['waybillNo','运单号'],['fbaNo','FBA号'],['warehouseCode','仓库代码'],['service','服务'],
-    ['customer','客户名称'],['container','柜号'],['system','系统柜号'],['inbound','入仓号'],['blocked','库存类型'],['transfer','转运方式'],
+    ['customer','客户名称'],['blocked','库存类型'],['transfer','转运方式'],
     ['destination','目的地'],['dispatch','派送方式'],['pallet','托盘标签'],['time','入库时间'],['weight','重量'],['volume','体积'],
     ['boxes','总箱数'],['pending','待审核箱数'],['unsent','未发货箱数'],['sent','已发货箱数'],['location','库位'],['remark','备注'],['instructions','指令内容'],
   ];
