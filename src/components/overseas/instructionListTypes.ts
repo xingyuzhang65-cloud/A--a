@@ -13,5 +13,6 @@ export interface InstructionListRow {
   transferNumbers?: string[];
   boxSelectionMode?: '指定' | '随机';
   legacyInstructionNo?: string;
+  rejectionReason?: string;
   inventoryRecordIds?: string[]; inventoryLinkSource?: 'example';
 }

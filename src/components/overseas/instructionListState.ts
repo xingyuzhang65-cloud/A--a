@@ -4,7 +4,7 @@ import { assignInstructionNumbers } from './instructionNumbers';
 import type { InstructionListRow } from './instructionListTypes';
 
 export const LIST_STATE_KEY = 'ans_overseas_instruction_list_v2';
-export interface ListLog { at: string; ids: string[]; action: string }
+export interface ListLog { at: string; ids: string[]; action: string; rejectionReason?: string }
 export function readListState(): { rows: InstructionListRow[]; logs: ListLog[] } {
   try {
     const saved = JSON.parse(localStorage.getItem(LIST_STATE_KEY) || 'null');
