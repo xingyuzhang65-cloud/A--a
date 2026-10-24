@@ -47,7 +47,7 @@ export default function InstructionWaybillInfo({
       {([
         ['客户简称', summary.customer],
         ['运单号', summary.waybill],
-        ['指令单类型', summary.instructionType],
+        ['下单类型', summary.instructionType],
         ['发货件数', summary.boxCount],
         ['客户备注', summary.customerNote],
       ] as const).map(([label, content]) => <div key={label} className={label === '客户备注' ? 'instruction-waybill-customer-note' : undefined}><dt>{label}：</dt><dd>{display(content)}</dd></div>)}
