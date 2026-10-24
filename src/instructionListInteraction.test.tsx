@@ -555,9 +555,13 @@ test('the actual staging order form supports batch ordering, prevents ordered ca
   await click(pendingCheckboxes[0]);
   await click(pendingCheckboxes[1]);
   await click(button('批量驳回'));
+  const rejectionDialog = get<HTMLElement>('[role="dialog"]', dom.window.document);
+  await setValue(get<HTMLTextAreaElement>('#rejection-reason', rejectionDialog), '申请资料不完整，请补充后重新申请');
+  await click(button('确认驳回', rejectionDialog));
   const rejected = readListState().rows.filter(row => pickedNumbers.includes(row.instructionNo));
   assert.equal(rejected.length, 2);
   assert.ok(rejected.every(row => row.tab === '驳回' && row.status === '已驳回'));
+  assert.ok(rejected.every(row => row.rejectionReason === '申请资料不完整，请补充后重新申请'));
   assert.ok(readListState().rows.some(row => row.tab === '待确认'), 'unselected rows remain pending');
   assert.ok(readListState().logs.at(-1)?.action.includes('2'));
 });
