@@ -6,6 +6,8 @@ import { JSDOM } from 'jsdom';
 import StagingManagement from './components/StagingManagement';
 import { INITIAL_INSTRUCTIONS } from './instructionData';
 import { INITIAL_STAGING_RECORDS } from './stagingData';
+import OverseasStagingInventoryPage from './components/overseas/OverseasStagingInventoryPage';
+import { createInitialOverseasInventory, persistOverseasInventory } from './components/overseas/overseasStorageInventoryData';
 
 const storageKey = 'ans_staging_management_v1';
 const columnKey = 'ans_staging_columns_v1';
@@ -111,6 +113,76 @@ function stored() { return JSON.parse(dom.window.localStorage.getItem(storageKey
 function summary() { return get('[aria-label="已选库存汇总"]').textContent || ''; }
 function selectRow(index: number) { return get<HTMLInputElement>('input[type="checkbox"]', rows()[index]); }
 function openFirstOrder() { return click(get<HTMLButtonElement>(`[aria-label="下单 ${first.palletLabel}"]`)); }
+
+async function openCurrentInventory() {
+  const data = createInitialOverseasInventory();
+  const source = data.records[0];
+  data.records = [
+    { ...source, id: 'filter-a', customer: '甲客户', waybillNo: 'WB-100', fbaNo: 'FBA-A', warehouseCode: 'ONT8', service: '快递派', blocked: '暂存', time: '2026-10-01 12:00:00', status: '暂存' },
+    { ...source, id: 'filter-b', customer: '乙客户', waybillNo: 'WB-200', fbaNo: 'FBA-B', warehouseCode: 'LAX9', service: '卡派', blocked: '拦截', time: '2026-10-02 12:00:00', status: '暂存' },
+    { ...source, id: 'filter-c', customer: '甲客户', waybillNo: 'WB-1000', fbaNo: 'FBA-C', warehouseCode: 'ONT8', service: '快递派', blocked: '暂存', time: '2026-10-03 12:00:00', status: '暂存' },
+    { ...source, id: 'filter-ready', customer: '甲客户', waybillNo: 'WB-READY', fbaNo: 'FBA-READY', warehouseCode: 'ONT8', service: '快递派', blocked: '暂存', time: '2026-10-03 12:00:00', status: '待出库' },
+  ];
+  data.records = data.records.map(record => ({ ...record, cargoBoxes: record.cargoBoxes.map((box, index) => ({ ...box, id: `${record.id}-box-${index}`, recordId: record.id })) }));
+  persistOverseasInventory(data);
+  const notices: string[] = [];
+  await act(async () => root.render(<OverseasStagingInventoryPage addToast={text => notices.push(text)} />));
+  return { notices, form: get<HTMLFormElement>('form[aria-label="暂存管理筛选"]') };
+}
+
+test('current inventory searches the displayed waybill and FBA fields with partial and exact batch matching', async () => {
+  const { form } = await openCurrentInventory();
+  assert.deepEqual([...form.querySelectorAll('label > span:first-child')].map(span => span.textContent), ['客户名称', '运单号', 'FBA号', '仓库代码']);
+  assert.ok(!form.textContent?.match(/入仓号|转运方式|柜号/));
+  await setValue(field('运单号'), ' wb-100 ');
+  assert.equal(rows().length, 3, 'typing must wait for query submission');
+  await submit(form);
+  assert.equal(rows().length, 2, 'single identifiers support partial matching');
+  await setValue(field('运单号'), 'wb-100； WB-200');
+  await submit(form);
+  assert.equal(rows().length, 2);
+  assert.ok(!host.querySelector('tbody')?.textContent?.includes('WB-1000'), 'batch matching must not include longer identifiers');
+  await setValue(field('FBA号'), 'fba-b');
+  await submit(form);
+  assert.ok(rows()[0].textContent?.includes('WB-200'));
+  assert.equal(rows().length, 1);
+  await click(button('重置'));
+  await setValue(field('FBA号'), 'fba-a， fba-c');
+  await submit(form);
+  assert.equal(rows().length, 2);
+  await setValue(field('运单号'), '   ');
+  await submit(form);
+  assert.equal(rows().length, 2, 'whitespace-only filters must be ignored');
+});
+
+test('current inventory combines visible column filters and dates, preserves them across tabs, and resets all criteria', async () => {
+  const { notices, form } = await openCurrentInventory();
+  await click(button('展开'));
+  await setValue(field('客户名称'), '甲客户');
+  await setValue(field('仓库代码'), 'ONT8');
+  await setValue(field('服务'), '快递派');
+  await setValue(field('库存类型'), '暂存');
+  await setValue(get<HTMLInputElement>('[aria-label="入库开始日期"]'), '2026-10-03');
+  await setValue(get<HTMLInputElement>('[aria-label="入库结束日期"]'), '2026-10-03');
+  await submit(form);
+  assert.equal(rows().length, 1);
+  assert.ok(rows()[0].textContent?.includes('WB-1000'));
+  await click(tab('指令处理完成'));
+  assert.equal(rows().length, 1);
+  assert.ok(rows()[0].textContent?.includes('WB-READY'));
+  await click(tab('暂存'));
+  await setValue(get<HTMLInputElement>('[aria-label="入库开始日期"]'), '2026-10-04');
+  await submit(form);
+  assert.equal(notices.at(-1), '开始日期不能晚于结束日期');
+  assert.ok(rows()[0].textContent?.includes('WB-1000'), 'invalid dates must retain the last applied query');
+  await click(button('重置'));
+  assert.equal(rows().length, 3);
+  assert.ok([...form.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select')].every(control => control.value === ''));
+  await setValue(field('库存类型'), '拦截');
+  await submit(form);
+  assert.equal(rows().length, 1);
+  assert.ok(rows()[0].textContent?.includes('WB-200'));
+});
 
 test('search applies combined criteria on submit and state tabs reflect the filtered inventory', async () => {
   assert.equal(rows().length, 13);
