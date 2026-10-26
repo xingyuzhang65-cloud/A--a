@@ -85,7 +85,7 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
         { name: '对账单管理', icon: FileCheck, id: 'statements' }
       ]
     },
-    { name: '报价审批', icon: FileCheck, id: 'quote-approval' },
+    { name: '指令费用审批', icon: FileCheck, id: 'finance-approval' },
     { name: '来款登记', icon: Receipt, id: 'receipt-matching' },
     { name: '出仓单', icon: PackageMinus, id: 'out-warehouse-doc' },
     { name: '客户余额', icon: Wallet, id: 'client-balances' },
@@ -126,7 +126,12 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
     { name: '客户管理', icon: UserCog, id: 'management-customers' }
   ];
 
-  const visibleMenuItems = currentTab.startsWith('management-') ? managementMenuItems : menuItems;
+  const financeMenuItems: SidebarMenuItem[] = [
+    { name: '指令费用审批', icon: FileCheck, id: 'finance-approval' },
+    { name: '指令费用明细', icon: Receipt, id: 'finance-fees' },
+    { name: '返回指令列表', icon: ClipboardList, id: 'instruction-list' },
+  ];
+  const visibleMenuItems = currentTab.startsWith('management-') ? managementMenuItems : currentTab.startsWith('finance-') ? financeMenuItems : menuItems;
 
   return (
     <aside 

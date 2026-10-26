@@ -503,10 +503,19 @@ test('the overseas instruction list menu preserves order, deep links, tab closin
   await act(async () => dom.window.dispatchEvent(new dom.window.HashChangeEvent('hashchange')));
   assert.equal(get('h1').textContent, '指令列表');
   await click(button('财务管理'));
-  assert.equal(dom.window.location.hash, '', 'top-level navigation must clear the previous deep link');
+  assert.equal(dom.window.location.hash, '#finance-approval', 'finance navigation opens its own deep link');
   assert.equal(dom.window.location.pathname, '/A--a/');
   assert.equal(dom.window.location.search, '?v=instruction-list-20261019');
-  assert.equal(host.querySelector('h1'), null);
+  assert.equal(get('h1').textContent, '指令费用审批');
+  await click(button('指令费用明细', get('#ans-sidebar')));
+  assert.equal(dom.window.location.hash, '#finance-fees');
+  assert.equal(get('h1').textContent, '指令费用明细');
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  await act(async () => root.render(<App />));
+  assert.equal(get('h1').textContent, '指令费用明细');
+  await click(button('返回指令列表', get('#ans-sidebar')));
+  assert.equal(dom.window.location.hash, '#instruction-list');
 });
 
 test('the actual staging order form supports batch ordering, prevents ordered cancellation, and persists after reload', async () => {

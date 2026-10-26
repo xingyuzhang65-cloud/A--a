@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
+import FinancePage from './components/finance/FinancePage';
 import Topbar from './components/Topbar';
 import FilterForm from './components/FilterForm';
 import WaybillTable from './components/WaybillTable';
@@ -20,24 +21,24 @@ import { appendTradeModeLog, seedTradeModeLogs } from './components/TradeModeLog
 export default function App() {
   const [currentTab, setCurrentTab] = useState<string>(() => {
     const hashTab = window.location.hash.slice(1);
-    return ['instruction-list', 'instruction-management', 'staging-management'].includes(hashTab) ? hashTab : 'waybills';
+    return ['instruction-list', 'instruction-management', 'staging-management', 'finance-approval', 'finance-fees'].includes(hashTab) ? hashTab : 'waybills';
   });
-  const [globalNav, setGlobalNav] = useState<string>('waybill-manage');
+  const [globalNav, setGlobalNav] = useState<string>(() => window.location.hash.startsWith('#finance-') ? 'finance-manage' : 'waybill-manage');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
 
   const navigateTab = (tab: string) => {
     setCurrentTab(tab);
-    setGlobalNav(tab.startsWith('management-') ? 'admin-center' : 'waybill-manage');
-    const hash = ['instruction-list', 'instruction-management', 'staging-management'].includes(tab) ? `#${tab}` : '';
+    setGlobalNav(tab.startsWith('management-') ? 'admin-center' : tab.startsWith('finance-') ? 'finance-manage' : 'waybill-manage');
+    const hash = ['instruction-list', 'instruction-management', 'staging-management', 'finance-approval', 'finance-fees'].includes(tab) ? `#${tab}` : '';
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${hash}`);
   };
 
   useEffect(() => {
     const handleHashChange = () => {
       const hashTab = window.location.hash.slice(1);
-      if (['instruction-list', 'instruction-management', 'staging-management'].includes(hashTab)) {
+      if (['instruction-list', 'instruction-management', 'staging-management', 'finance-approval', 'finance-fees'].includes(hashTab)) {
         setCurrentTab(hashTab);
-        setGlobalNav('waybill-manage');
+        setGlobalNav(hashTab.startsWith('finance-') ? 'finance-manage' : 'waybill-manage');
       } else if (!window.location.hash) {
         setCurrentTab('waybills');
         setGlobalNav('waybill-manage');
@@ -280,6 +281,7 @@ export default function App() {
         <Topbar
           activeNav={globalNav}
           onNavChange={(nav) => {
+            if (nav === 'finance-manage') { navigateTab('finance-approval'); return; }
             setGlobalNav(nav);
             window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
             if (nav === 'waybill-manage') setCurrentTab('waybills');
@@ -330,6 +332,7 @@ export default function App() {
                 <button type="button" aria-label="关闭暂存管理页签" onClick={() => navigateTab('waybills')} className="text-[12px] opacity-70 hover:opacity-100 cursor-pointer">×</button>
               </div>
             )}
+            {currentTab.startsWith('finance-') && <div className="px-4 h-8 text-xs font-bold rounded-md flex items-center gap-2.5 bg-[#5c67f2] text-white shadow-sm shrink-0">{currentTab === 'finance-fees' ? '指令费用明细' : '指令费用审批'}<button aria-label="关闭财务页签" onClick={() => navigateTab('instruction-list')}>×</button></div>}
             {globalNav === 'admin-center' && (
               <>
                 <button className="px-3.5 h-8 text-xs font-semibold rounded-md border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-700 flex items-center gap-1.5">
@@ -351,7 +354,9 @@ export default function App() {
         {/* Dynamic View container */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           <AnimatePresence>
-            {globalNav === 'admin-center' ? (
+            {currentTab === 'finance-approval' || currentTab === 'finance-fees' ? (
+              <FinancePage mode={currentTab === 'finance-fees' ? 'fees' : 'approvals'} />
+            ) : globalNav === 'admin-center' ? (
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
