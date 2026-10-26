@@ -476,7 +476,7 @@ test('the overseas instruction list menu preserves order, deep links, tab closin
   const items = [...sidebar.querySelectorAll<HTMLButtonElement>('button')];
   const listIndex = items.findIndex(item => item.textContent === '指令列表');
   assert.ok(listIndex >= 0);
-  assert.equal(items.findIndex(item => item.textContent === '指令管理'), listIndex + 1);
+  assert.equal(items.findIndex(item => item.textContent === '费用管理'), listIndex + 1);
   assert.equal(items.findIndex(item => item.textContent === '暂存管理'), listIndex - 1);
   assert.ok(!sidebar.textContent?.includes('中转记录'));
   await click(button('指令列表', sidebar));
@@ -491,7 +491,7 @@ test('the overseas instruction list menu preserves order, deep links, tab closin
   await act(async () => root.render(<App />));
   assert.equal(get('h1').textContent, '指令列表');
   assert.ok(button('指令列表', get('#ans-sidebar')));
-  for (const [hash, title] of [['instruction-management', '指令管理'], ['staging-management', '暂存管理'], ['instruction-list', '指令列表']]) {
+  for (const [hash, title] of [['instruction-management', '费用管理'], ['staging-management', '暂存管理'], ['instruction-list', '指令列表']]) {
     dom.window.history.replaceState(null, '', `/A--a/#${hash}`);
     await act(async () => dom.window.dispatchEvent(new dom.window.HashChangeEvent('hashchange')));
     assert.equal(get('h1').textContent, title);

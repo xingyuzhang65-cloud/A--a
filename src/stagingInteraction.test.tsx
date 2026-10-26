@@ -401,7 +401,7 @@ test('the overseas menu hides transit history and supports staging deep links, c
   const sidebar = get('#ans-sidebar');
   assert.ok(!sidebar.textContent?.includes('中转记录'));
   const items = [...sidebar.querySelectorAll<HTMLButtonElement>('button')];
-  assert.equal(items.findIndex(item => item.textContent === '暂存管理'), items.findIndex(item => item.textContent === '指令管理') - 2);
+  assert.equal(items.findIndex(item => item.textContent === '暂存管理'), items.findIndex(item => item.textContent === '费用管理') - 2);
   await click(button('暂存管理', sidebar));
   assert.equal(get('h1').textContent, '暂存管理');
   assert.equal(dom.window.location.hash, '#staging-management');
@@ -417,7 +417,7 @@ test('the overseas menu hides transit history and supports staging deep links, c
   assert.ok(button('暂存管理', get('#ans-sidebar')), 'overseas group must initially expand for a deep link');
   dom.window.history.replaceState(null, '', '/A--a/#instruction-management');
   await act(async () => dom.window.dispatchEvent(new dom.window.HashChangeEvent('hashchange')));
-  assert.equal(get('h1').textContent, '指令管理');
+  assert.equal(get('h1').textContent, '费用管理');
   dom.window.history.replaceState(null, '', '/A--a/#staging-management');
   await act(async () => dom.window.dispatchEvent(new dom.window.HashChangeEvent('hashchange')));
   assert.equal(get('h1').textContent, '暂存管理');

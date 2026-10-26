@@ -160,7 +160,7 @@ export default function InstructionManagement() {
     const url = URL.createObjectURL(new Blob([exportInstructionsCsv(rows)], { type: 'text/csv;charset=utf-8;' }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = `指令管理_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `费用管理_${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -203,7 +203,7 @@ export default function InstructionManagement() {
       <div className="flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-[#5c67f2]/10 text-[#5c67f2] flex items-center justify-center"><ClipboardList className="w-5 h-5" /></div>
-          <div><h1 className="text-base font-bold text-slate-800">指令管理</h1><p className="text-xs text-slate-400 mt-0.5">海外中转单 / 费用指令配置</p></div>
+          <div><h1 className="text-base font-bold text-slate-800">费用管理</h1><p className="text-xs text-slate-400 mt-0.5">海外中转单 / 费用配置</p></div>
         </div>
       </div>
 

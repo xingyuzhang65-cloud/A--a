@@ -43,7 +43,7 @@ test('instruction page renders required fields and restores saved data or recove
   try {
     const render = () => renderToStaticMarkup(React.createElement(InstructionManagement));
     const initial = render();
-    for (const label of ['指令管理', '费用代码', '费用名称', '费用类型', '计费单位', '计费单价（元）', '成本单价（元）', '币种', '状态', '描述', '列设置']) {
+    for (const label of ['费用管理', '费用代码', '费用名称', '费用类型', '计费单位', '计费单价（元）', '成本单价（元）', '币种', '状态', '描述', '列设置']) {
       assert.ok(initial.includes(label), label);
     }
     assert.equal((initial.match(/aria-label="编辑 /g) || []).length, 20);

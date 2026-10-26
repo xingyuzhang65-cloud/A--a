@@ -322,8 +322,8 @@ export default function App() {
             )}
             {currentTab === 'instruction-management' && (
               <div className="px-4 h-8 text-xs font-bold rounded-md flex items-center gap-2.5 bg-[#5c67f2] text-white shadow-sm shrink-0">
-                指令管理
-                <button type="button" aria-label="关闭指令管理页签" onClick={() => navigateTab('waybills')} className="text-[12px] opacity-70 hover:opacity-100 cursor-pointer">×</button>
+                费用管理
+                <button type="button" aria-label="关闭费用管理页签" onClick={() => navigateTab('waybills')} className="text-[12px] opacity-70 hover:opacity-100 cursor-pointer">×</button>
               </div>
             )}
             {currentTab === 'staging-management' && (
