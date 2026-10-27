@@ -4,6 +4,8 @@ import React, { act } from 'react';
 import type { Root } from 'react-dom/client';
 import { JSDOM } from 'jsdom';
 import InstructionManagement from './components/InstructionManagement';
+import { INITIAL_INSTRUCTIONS } from './instructionData';
+import { loadInstructionCatalog } from './components/overseas/instructionManagementCatalog';
 
 const storageKey = 'ans_instruction_management_v1';
 const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost:4205/A--a/', pretendToBeVisual: true });
@@ -192,7 +194,7 @@ test('column choices persist and the last remaining column cannot be hidden', as
   assert.equal(host.querySelectorAll('thead th').length, 3);
   await click(get<HTMLButtonElement>('[aria-label="列设置"]'));
   await click(button('恢复默认'));
-  assert.equal(host.querySelectorAll('thead th').length, 11);
+  assert.equal(host.querySelectorAll('thead th').length, 13);
 });
 
 test('failed storage writes keep the edit open and do not change rows or logs', async (t) => {
@@ -214,6 +216,85 @@ test('Escape closes dialogs and restores keyboard focus to the originating row a
   await act(async () => dom.window.document.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
   assert.equal(dom.window.document.querySelector('[role="dialog"]'), null);
   assert.equal(dom.window.document.activeElement, edit);
+});
+
+test('business settings link the PDA radios, cancel safely and save readable changes that survive reload', async () => {
+  await click(get<HTMLButtonElement>('[aria-label="编辑 开箱费（仅开箱）"]'));
+  assert.ok(get<HTMLInputElement>('[aria-label="操作指令"]', dialog()).checked);
+  assert.ok(get<HTMLInputElement>('[aria-label="需要PDA操作"]', dialog()).checked);
+  await click(get<HTMLInputElement>('[aria-label="纯费用"]', dialog()));
+  assert.ok(get<HTMLInputElement>('[aria-label="不需要PDA操作"]', dialog()).checked);
+  assert.ok(get<HTMLInputElement>('[aria-label="需要PDA操作"]', dialog()).disabled);
+  await click(button('取消', dialog()));
+  assert.equal(localStorage.getItem(storageKey), null);
+  await click(get<HTMLButtonElement>('[aria-label="编辑 开箱费（仅开箱）"]'));
+  await click(get<HTMLInputElement>('[aria-label="纯费用"]', dialog()));
+  await submit(get<HTMLFormElement>('form', dialog()));
+  const saved = storedData();
+  assert.equal(saved.instructions[0].businessAttribute, '纯费用');
+  assert.equal(saved.instructions[0].requiresPda, false);
+  assert.equal(saved.instructions[0].type, INITIAL_INSTRUCTIONS[0].type);
+  assert.deepEqual(saved.logs[0].changes, [
+    { field: '业务属性', before: '操作指令', after: '纯费用' },
+    { field: '是否需要PDA操作', before: '需要', after: '不需要' },
+  ]);
+  assert.match(rows()[0].textContent!, /纯费用不需要/);
+  assert.equal(loadInstructionCatalog()[0].requiresPda, false);
+  await act(async () => root.unmount()); root = createRoot(host);
+  await act(async () => root.render(<InstructionManagement />));
+  await click(get<HTMLButtonElement>('[aria-label="编辑 开箱费（仅开箱）"]'));
+  assert.ok(get<HTMLInputElement>('[aria-label="纯费用"]', dialog()).checked);
+  assert.ok(get<HTMLInputElement>('[aria-label="不需要PDA操作"]', dialog()).checked);
+  await click(get<HTMLInputElement>('[aria-label="操作指令"]', dialog()));
+  assert.equal(get<HTMLInputElement>('[aria-label="需要PDA操作"]', dialog()).disabled, false);
+  assert.ok(get<HTMLInputElement>('[aria-label="需要PDA操作"]', dialog()).checked);
+  await click(get<HTMLInputElement>('[aria-label="不需要PDA操作"]', dialog()));
+  await submit(get<HTMLFormElement>('form', dialog()));
+  assert.equal(storedData().instructions[0].businessAttribute, '操作指令');
+  assert.equal(storedData().instructions[0].requiresPda, false);
+});
+
+test('business and PDA filters combine with fee type, preserve explicit no-PDA operations and reset together', async () => {
+  const instructions = INITIAL_INSTRUCTIONS.map((row, index) => index === 0 ? { ...row, businessAttribute: '纯费用', requiresPda: false }
+    : index === 1 ? { ...row, requiresPda: false } : row);
+  localStorage.setItem(storageKey, JSON.stringify({ instructions, logs: [] }));
+  await act(async () => root.unmount()); root = createRoot(host);
+  await act(async () => root.render(<InstructionManagement />));
+  const form = get<HTMLFormElement>('form');
+  await setValue(field('业务属性', form), '操作指令');
+  await setValue(field('是否需要PDA操作', form), 'false');
+  assert.equal(rows().length, 20);
+  await submit(form);
+  assert.equal(rows().length, 1); assert.match(rows()[0].textContent!, /重新包装费-多个产品/);
+  await setValue(field('业务属性', form), '纯费用'); await setValue(field('费用类型', form), '开箱费'); await submit(form);
+  assert.equal(rows().length, 1); assert.match(rows()[0].textContent!, /开箱费（仅开箱）/);
+  await setValue(field('是否需要PDA操作', form), 'true'); await submit(form);
+  assert.match(host.textContent!, /暂无符合条件/);
+  await click(button('重置')); assert.equal(rows().length, 20);
+  assert.equal(field('业务属性', form).value, ''); assert.equal(field('是否需要PDA操作', form).value, '');
+});
+
+test('legacy fee data and column choices gain the new settings once without losing values or later visibility choices', async () => {
+  const { businessAttribute, requiresPda, ...legacy } = { ...INITIAL_INSTRUCTIONS[0], price: 12.5, cost: 8.25, description: '保留历史配置' };
+  localStorage.setItem(storageKey, JSON.stringify({ instructions: [legacy], logs: [] }));
+  localStorage.setItem('ans_instruction_columns_v1', JSON.stringify(['code', 'description']));
+  localStorage.removeItem('ans_instruction_columns_business_v1');
+  await act(async () => root.unmount()); root = createRoot(host);
+  await act(async () => root.render(<InstructionManagement />));
+  assert.deepEqual([...host.querySelectorAll('thead th')].map(th => th.textContent), ['', '费用代码', '业务属性', '是否需要PDA操作', '描述', '操作']);
+  assert.match(rows()[0].textContent!, /操作指令需要保留历史配置/);
+  await click(get<HTMLButtonElement>('[aria-label="编辑 开箱费（仅开箱）"]'));
+  assert.equal(field('计费单价（元）', dialog()).value, '12.5');
+  assert.equal(field('成本单价（元）', dialog()).value, '8.25');
+  await submit(get<HTMLFormElement>('form', dialog()));
+  assert.equal(storedData().logs.length, 0, 'migration alone must not create a user edit');
+  await click(get<HTMLButtonElement>('[aria-label="列设置"]'));
+  const option = [...host.querySelectorAll('label')].find(label => label.textContent?.trim() === '业务属性')!;
+  await click(get<HTMLInputElement>('input', option));
+  await act(async () => root.unmount()); root = createRoot(host);
+  await act(async () => root.render(<InstructionManagement />));
+  assert.equal([...host.querySelectorAll('thead th')].some(th => th.textContent === '业务属性'), false);
+  assert.ok([...host.querySelectorAll('thead th')].some(th => th.textContent === '是否需要PDA操作'));
 });
 
 test('the overseas menu and direct link open instruction management and closing its tab returns to waybills', async () => {

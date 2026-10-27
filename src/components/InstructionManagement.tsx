@@ -1,16 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronLeft, ChevronRight, ClipboardList, Download, Edit3, FileSearch, History, RotateCcw, Search, Settings, X } from 'lucide-react';
 import {
-  INITIAL_INSTRUCTIONS, createInstructionChanges, exportInstructionsCsv, filterInstructions,
+  INITIAL_INSTRUCTIONS, createInstructionChanges, exportInstructionsCsv, filterInstructions, normalizeInstructionBusiness,
   type Instruction, type InstructionFilters, type InstructionLog,
 } from '../instructionData';
 
 const STORAGE_KEY = 'ans_instruction_management_v1';
 const COLUMN_KEY = 'ans_instruction_columns_v1';
+const COLUMN_SCHEMA_KEY = 'ans_instruction_columns_business_v1';
 const columns = [
   { key: 'code', label: '费用代码', width: 'w-[168px]' },
   { key: 'name', label: '费用名称', width: 'w-[200px]' },
   { key: 'type', label: '费用类型', width: 'w-[138px]' },
+  { key: 'businessAttribute', label: '业务属性', width: 'w-[120px]' },
+  { key: 'requiresPda', label: '是否需要PDA操作', width: 'w-[160px]' },
   { key: 'unit', label: '计费单位', width: 'w-[110px]' },
   { key: 'price', label: '计费单价（元）', width: 'w-[140px]' },
   { key: 'cost', label: '成本单价（元）', width: 'w-[140px]' },
@@ -20,7 +23,7 @@ const columns = [
 ] as const;
 type ColumnKey = typeof columns[number]['key'];
 const allColumns = columns.map(column => column.key);
-const emptyFilters: InstructionFilters = { code: '', type: '', status: '' };
+const emptyFilters: InstructionFilters = { code: '', type: '', status: '', businessAttribute: '', requiresPda: '' };
 const currencyNames: Record<string, string> = { USD: '美元', CNY: '人民币', EUR: '欧元', GBP: '英镑' };
 const inputClass = 'w-full px-3 py-2 text-xs border border-slate-200 rounded bg-slate-50 placeholder:text-slate-400 focus:outline-none focus:border-[#5c67f2] focus:ring-2 focus:ring-[#5c67f2]/10 transition-all';
 const secondaryButton = 'inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer';
@@ -38,7 +41,7 @@ function loadData(): { instructions: Instruction[]; logs: InstructionLog[] } {
         log && typeof log.id === 'string' && typeof log.instructionId === 'string' &&
         typeof log.timestamp === 'string' && typeof log.operator === 'string' && Array.isArray(log.changes) &&
         log.changes.every(change => change && typeof change.field === 'string' && typeof change.before === 'string' && typeof change.after === 'string')) : [];
-      return { instructions: saved.instructions, logs };
+      return { instructions: saved.instructions.map(normalizeInstructionBusiness), logs };
     }
   } catch { /* Use the initial list if no readable local data is available. */ }
   return { instructions: INITIAL_INSTRUCTIONS, logs: [] };
@@ -49,7 +52,8 @@ function loadColumns(): ColumnKey[] {
     const saved = JSON.parse(localStorage.getItem(COLUMN_KEY) || 'null');
     if (Array.isArray(saved)) {
       const valid = allColumns.filter(key => saved.includes(key));
-      if (valid.length) return valid;
+      if (valid.length) return localStorage.getItem(COLUMN_SCHEMA_KEY) === '1' ? valid
+        : allColumns.filter(key => valid.includes(key) || key === 'businessAttribute' || key === 'requiresPda');
     }
   } catch { /* Show all columns by default. */ }
   return allColumns;
@@ -83,6 +87,15 @@ export default function InstructionManagement() {
   const somePageSelected = pageRows.some(row => selectedIds.includes(row.id));
   const activeColumns = columns.filter(column => visibleColumns.includes(column.key));
   const targetLogs = logTarget ? data.logs.filter(log => log.instructionId === logTarget.id).slice().reverse() : [];
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(COLUMN_SCHEMA_KEY) !== '1') {
+        localStorage.setItem(COLUMN_KEY, JSON.stringify(visibleColumns));
+        localStorage.setItem(COLUMN_SCHEMA_KEY, '1');
+      }
+    } catch { /* Keep the migrated columns visible for this visit. */ }
+  }, []);
 
   useEffect(() => {
     if (selectAllRef.current) selectAllRef.current.indeterminate = somePageSelected && !allPageSelected;
@@ -127,7 +140,7 @@ export default function InstructionManagement() {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { setDraft(null); setLogTarget(null); }
       if (event.key !== 'Tab' || !dialog) return;
-      const controls = Array.from<HTMLElement>(dialog.querySelectorAll('button:not([disabled]), input:not([readonly]), select, textarea, [tabindex="0"]'));
+      const controls = Array.from<HTMLElement>(dialog.querySelectorAll('button:not([disabled]), input:not([readonly]):not([disabled]), select:not([disabled]), textarea, [tabindex="0"]'));
       const first = controls[0];
       const last = controls[controls.length - 1];
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
@@ -171,7 +184,7 @@ export default function InstructionManagement() {
   const saveInstruction = (event: React.FormEvent) => {
     event.preventDefault();
     if (!draft) return;
-    const next = { ...draft, name: draft.name.trim(), unit: draft.unit.trim(), description: draft.description.trim() };
+    const next = normalizeInstructionBusiness<Instruction>({ ...draft, name: draft.name.trim(), unit: draft.unit.trim(), description: draft.description.trim() });
     if (!next.name || !next.unit || !next.type || !Number.isFinite(next.price) || !Number.isFinite(next.cost) || next.price < 0 || next.cost < 0) {
       setError('请完整填写费用名称、类型和计费单位，单价必须为大于或等于 0 的数字。'); return;
     }
@@ -208,7 +221,7 @@ export default function InstructionManagement() {
       </div>
 
       <form onSubmit={applySearch} className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm shrink-0">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_auto] items-end gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 items-end gap-4">
           <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-500">费用代码
             <input className={inputClass} placeholder="请输入费用代码" value={filters.code} onChange={event => setFilters({ ...filters, code: event.target.value })} />
           </label>
@@ -220,6 +233,16 @@ export default function InstructionManagement() {
           <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-500">状态
             <select className={inputClass} value={filters.status} onChange={event => setFilters({ ...filters, status: event.target.value })}>
               <option value="">全部状态</option><option>启用</option><option>停用</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-500">业务属性
+            <select className={inputClass} value={filters.businessAttribute} onChange={event => setFilters({ ...filters, businessAttribute: event.target.value as InstructionFilters['businessAttribute'] })}>
+              <option value="">全部业务属性</option><option>操作指令</option><option>纯费用</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-500">是否需要PDA操作
+            <select className={inputClass} value={filters.requiresPda} onChange={event => setFilters({ ...filters, requiresPda: event.target.value as InstructionFilters['requiresPda'] })}>
+              <option value="">全部</option><option value="true">需要</option><option value="false">不需要</option>
             </select>
           </label>
           <div className="flex gap-2"><button type="submit" className={primaryButton}><Search className="w-3.5 h-3.5" />查询</button><button type="button" onClick={resetSearch} className={secondaryButton}><RotateCcw className="w-3.5 h-3.5" />重置</button></div>
@@ -256,6 +279,8 @@ export default function InstructionManagement() {
                   {column.key === 'status' ? <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium ${row.status === '启用' ? 'text-emerald-600 bg-emerald-50 border border-emerald-100' : 'text-slate-500 bg-slate-100 border border-slate-200'}`}><span className={`w-1.5 h-1.5 rounded-full ${row.status === '启用' ? 'bg-emerald-500' : 'bg-slate-400'}`} />{row.status}</span>
                     : column.key === 'price' || column.key === 'cost' ? row[column.key].toFixed(2)
                     : column.key === 'currency' ? currencyNames[row.currency] || row.currency
+                    : column.key === 'businessAttribute' ? <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium ${row.businessAttribute === '操作指令' ? 'bg-indigo-50 text-[#5c67f2]' : 'bg-slate-100 text-slate-600'}`}>{row.businessAttribute}</span>
+                    : column.key === 'requiresPda' ? <span className={row.requiresPda ? 'text-[#5c67f2]' : 'text-slate-500'}>{row.requiresPda ? '需要' : '不需要'}</span>
                     : <div title={String(row[column.key])} className={`truncate ${column.key === 'code' ? 'font-mono text-[11px] text-slate-500' : column.key === 'name' ? 'font-medium text-slate-700' : ''}`}>{row[column.key] || '—'}</div>}
                 </td>)}
                 <td className={`px-3 py-3.5 sticky right-0 border-l border-slate-100 ${selectedIds.includes(row.id) ? 'bg-indigo-50' : 'bg-white group-hover:bg-slate-50'}`}><div className="flex items-center justify-center gap-3 whitespace-nowrap"><button type="button" aria-label={`编辑 ${row.name}`} onClick={() => { setError(''); setDraft({ ...row }); }} className="inline-flex gap-1 items-center text-[#5c67f2] hover:text-[#4a55e0] hover:underline cursor-pointer"><Edit3 className="w-3 h-3" />编辑</button><button type="button" aria-label={`查看 ${row.name} 日志`} onClick={() => setLogTarget(row)} className="inline-flex gap-1 items-center text-slate-500 hover:text-[#5c67f2] hover:underline cursor-pointer"><History className="w-3 h-3" />日志</button></div></td>
@@ -280,7 +305,7 @@ export default function InstructionManagement() {
 
       {(draft || logTarget) && <div className="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-5">
         <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="instruction-dialog-title" className={`bg-white rounded-xl border border-slate-200 shadow-2xl w-full ${draft ? 'max-w-2xl' : 'max-w-3xl'} max-h-[90vh] flex flex-col`}>
-          <div className="px-6 py-4 flex items-center justify-between border-b border-slate-200 bg-slate-50 rounded-t-xl shrink-0"><div className="flex items-center gap-2 text-slate-800"><span className="text-[#5c67f2]">{draft ? <Edit3 className="w-4 h-4" /> : <History className="w-4 h-4" />}</span><h2 id="instruction-dialog-title" className="text-sm font-bold">{draft ? '编辑费用指令' : '操作日志'}</h2></div><button type="button" aria-label="关闭弹窗" onClick={() => { setDraft(null); setLogTarget(null); }} className="p-1.5 rounded text-slate-400 hover:bg-slate-200 hover:text-slate-700 cursor-pointer"><X className="w-4 h-4" /></button></div>
+          <div className="px-6 py-4 flex items-center justify-between border-b border-slate-200 bg-slate-50 rounded-t-xl shrink-0"><div className="flex items-center gap-2 text-slate-800"><span className="text-[#5c67f2]">{draft ? <Edit3 className="w-4 h-4" /> : <History className="w-4 h-4" />}</span><h2 id="instruction-dialog-title" className="text-sm font-bold">{draft ? '编辑费用配置' : '操作日志'}</h2></div><button type="button" aria-label="关闭弹窗" onClick={() => { setDraft(null); setLogTarget(null); }} className="p-1.5 rounded text-slate-400 hover:bg-slate-200 hover:text-slate-700 cursor-pointer"><X className="w-4 h-4" /></button></div>
           {draft ? <form onSubmit={saveInstruction} className="min-h-0 flex flex-col">
             <div className="p-6 space-y-5 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
@@ -288,6 +313,15 @@ export default function InstructionManagement() {
                 <label className="text-xs font-semibold text-slate-500 space-y-1.5"><span>费用名称 <span className="text-rose-400">*</span></span><input required maxLength={80} value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} className={inputClass} /></label>
                 <label className="text-xs font-semibold text-slate-500 space-y-1.5"><span>费用类型 <span className="text-rose-400">*</span></span><select required value={draft.type} onChange={event => setDraft({ ...draft, type: event.target.value })} className={inputClass}>{types.map(type => <option key={type}>{type}</option>)}</select></label>
                 <label className="text-xs font-semibold text-slate-500 space-y-1.5"><span>计费单位 <span className="text-rose-400">*</span></span><input required maxLength={30} value={draft.unit} onChange={event => setDraft({ ...draft, unit: event.target.value })} className={inputClass} /></label>
+                <fieldset className="col-span-2 min-w-0">
+                  <legend className="mb-2 text-xs font-semibold text-slate-500">业务属性 <span className="text-rose-400">*</span></legend>
+                  <div className="flex flex-wrap gap-6">{(['操作指令', '纯费用'] as const).map(value => <label key={value} className="inline-flex items-center gap-2 text-xs text-slate-700 cursor-pointer"><input type="radio" name="fee-business-attribute" aria-label={value} checked={draft.businessAttribute === value} onChange={() => setDraft({ ...draft, businessAttribute: value, requiresPda: value === '操作指令' })} className="accent-[#5c67f2]" />{value}</label>)}</div>
+                </fieldset>
+                <fieldset className="col-span-2 min-w-0" aria-describedby="fee-pda-description">
+                  <legend className="mb-2 text-xs font-semibold text-slate-500">是否需要PDA操作 <span className="text-rose-400">*</span></legend>
+                  <div className="flex flex-wrap gap-6">{([true, false] as const).map(value => <label key={String(value)} className={`inline-flex items-center gap-2 text-xs ${draft.businessAttribute === '纯费用' ? 'text-slate-400 cursor-not-allowed' : 'text-slate-700 cursor-pointer'}`}><input type="radio" name="fee-requires-pda" aria-label={value ? '需要PDA操作' : '不需要PDA操作'} checked={draft.requiresPda === value} disabled={draft.businessAttribute === '纯费用'} onChange={() => setDraft({ ...draft, requiresPda: value })} className="accent-[#5c67f2] disabled:cursor-not-allowed" />{value ? '需要' : '不需要'}</label>)}</div>
+                  <p id="fee-pda-description" className="mt-2 text-xs leading-relaxed text-slate-400">{draft.businessAttribute === '纯费用' ? '纯费用仅用于计费，不需要PDA操作。' : draft.requiresPda ? '操作指令需要PDA操作，作为仓库待处理任务的配置依据。' : '操作指令不需要PDA操作，可通过系统记录处理结果。'}</p>
+                </fieldset>
                 <label className="text-xs font-semibold text-slate-500 space-y-1.5"><span>计费单价（元） <span className="text-rose-400">*</span></span><input type="number" required min="0" step="0.01" value={Number.isNaN(draft.price) ? '' : draft.price} onChange={event => setDraft({ ...draft, price: event.target.valueAsNumber })} className={inputClass} /></label>
                 <label className="text-xs font-semibold text-slate-500 space-y-1.5"><span>成本单价（元） <span className="text-rose-400">*</span></span><input type="number" required min="0" step="0.01" value={Number.isNaN(draft.cost) ? '' : draft.cost} onChange={event => setDraft({ ...draft, cost: event.target.valueAsNumber })} className={inputClass} /></label>
                 <label className="text-xs font-semibold text-slate-500 space-y-1.5"><span>币种</span><select value={draft.currency} onChange={event => setDraft({ ...draft, currency: event.target.value })} className={inputClass}>{Object.entries(currencyNames).map(([code, name]) => <option key={code} value={code}>{name}（{code}）</option>)}</select></label>

@@ -1,4 +1,5 @@
 import { loadInstructionCatalog, type InstructionCatalogRow } from './instructionManagementCatalog';
+import { normalizeInstructionBusiness, type InstructionBusinessAttribute } from '../../instructionData';
 import { getOverseasInventoryExample } from './overseasStorageInventoryExamples';
 
 export type InventoryStatus = '暂存' | '待出库' | '已出库';
@@ -17,6 +18,7 @@ export interface InventoryRecord {
 }
 export interface StorageAttachment { id: string; name: string; size: number; type: string; dataUrl?: string }
 export interface StorageFeeLine {
+  businessAttribute?: InstructionBusinessAttribute; requiresPda?: boolean;
   id: string; code: string; name: string; type: string; unit: string; exchangeRate: number; unitPrice: number; quantity: number;
   currency: string; feeRemark: string; instructionRemark: string; addedAt: string; addedBy: string; status: '待处理' | '已处理';
   images?: StorageAttachment[];
@@ -814,10 +816,11 @@ export function getInventoryFeeCatalog(): StorageFeeLine[] {
     const state=JSON.parse(localStorage.getItem('ans-overseas-instruction-management-reference-v1')||'null');
     if(Array.isArray(state?.rows))for(const row of state.rows) {
       if(row&&merged.has(row.code)&&typeof row.name==='string'&&typeof row.unit==='string'&&typeof row.type==='string'
-        &&typeof row.currency==='string'&&finiteNonnegative(row.price)&&['启用','停用'].includes(row.status))merged.set(row.code,row);
+        &&typeof row.currency==='string'&&finiteNonnegative(row.price)&&['启用','停用'].includes(row.status))merged.set(row.code,normalizeInstructionBusiness<InstructionCatalogRow>({...merged.get(row.code),...row}));
     }
   }catch{/* Default to the shared fee dictionary. */}
   const catalog=[...merged.values()].filter(row=>row.status==='启用').map(row=>({
+    businessAttribute:row.businessAttribute,requiresPda:row.requiresPda,
     id:'catalog-'+row.code,code:row.code,name:row.name,type:row.type,unit:row.unit,exchangeRate:row.currency==='人民币'?1:7.1,
     unitPrice:row.price,quantity:1,currency:row.currency,feeRemark:'',instructionRemark:row.description,addedAt:'',addedBy:'天朗（付豪）',status:'待处理' as const,
   }));

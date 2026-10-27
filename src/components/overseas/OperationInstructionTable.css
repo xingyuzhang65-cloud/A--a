@@ -120,6 +120,13 @@
 .operation-instruction-actions button { padding: 0; border: 0; background: transparent; color: #5c67f2; font: inherit; cursor: pointer; }
 .operation-instruction-actions button:hover { text-decoration: underline; }
 .operation-instruction-actions .operation-instruction-remove { color: #f56c6c; }
+.operation-instruction-price { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.operation-instruction-price button { display: inline-flex; padding: 3px; border: 0; background: transparent; color: #5c67f2; cursor: pointer; }
+.operation-instruction-price-editor { display: flex; flex-direction: column; gap: 5px; white-space: normal; }
+.operation-instruction-price-editor input { box-sizing: border-box; width: 100%; min-width: 0; padding: 5px; border: 1px solid #5c67f2; border-radius: 3px; font: inherit; }
+.operation-instruction-price-editor > span { display: flex; justify-content: center; gap: 12px; }
+.operation-instruction-price-editor button { padding: 0; border: 0; background: transparent; color: #5c67f2; font: inherit; cursor: pointer; }
+.operation-instruction-price-editor small { color: #f56c6c; overflow-wrap: anywhere; }
 .operation-instruction-table-container button:focus-visible,
 .operation-instruction-table-scroll:focus-visible { outline: 2px solid #5c67f2; outline-offset: 2px; }
 

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Download, FileSearch, History, MapPin, Package, RotateCcw, Search, Settings, X } from 'lucide-react';
 import { EMPTY_STAGING_FILTERS, INITIAL_STAGING_RECORDS, exportStagingCsv, filterStagingRecords, summarizeStagingRecords, type StagingFilters, type StagingLog, type StagingRecord, type StagingStatus } from '../stagingData';
-import { INITIAL_INSTRUCTIONS, type Instruction } from '../instructionData';
+import { INITIAL_INSTRUCTIONS, normalizeInstructionBusiness, type Instruction } from '../instructionData';
 
 const STORAGE_KEY = 'ans_staging_management_v1';
 const COLUMN_KEY = 'ans_staging_columns_v1';
@@ -73,7 +73,7 @@ function loadInstructions(): Instruction[] {
     const saved = JSON.parse(localStorage.getItem('ans_instruction_management_v1') || 'null');
     if (Array.isArray(saved?.instructions)) return saved.instructions.filter((row: Instruction) => row && row.status === '启用' &&
       typeof row.id === 'string' && typeof row.name === 'string' && typeof row.code === 'string' && typeof row.unit === 'string' &&
-      typeof row.currency === 'string' && Number.isFinite(row.price) && row.price >= 0);
+      typeof row.currency === 'string' && Number.isFinite(row.price) && row.price >= 0).map(normalizeInstructionBusiness);
   } catch { /* Use the initial fee instructions when no saved settings exist. */ }
   return INITIAL_INSTRUCTIONS.filter(row => row.status === '启用');
 }

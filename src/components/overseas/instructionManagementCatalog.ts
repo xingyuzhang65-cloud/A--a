@@ -1,4 +1,4 @@
-import { INITIAL_INSTRUCTIONS, type Instruction } from '../../instructionData';
+import { INITIAL_INSTRUCTIONS, normalizeInstructionBusiness, type Instruction, type InstructionBusinessConfiguration } from '../../instructionData';
 
 export function loadInstructionCatalog(): InstructionCatalogRow[] {
   const currencies: Record<string, string> = { USD: '美元', CNY: '人民币', EUR: '欧元', GBP: '英镑' };
@@ -7,16 +7,16 @@ export function loadInstructionCatalog(): InstructionCatalogRow[] {
     const saved = JSON.parse(localStorage.getItem('ans_instruction_management_v1') || 'null');
     if (Array.isArray(saved?.instructions) && saved.instructions.every((row: Instruction) => row && typeof row.code === 'string' && typeof row.name === 'string' && typeof row.unit === 'string' && typeof row.type === 'string' && typeof row.currency === 'string' && Number.isFinite(row.price) && row.price >= 0 && Number.isFinite(row.cost) && ['启用', '停用'].includes(row.status))) rows = saved.instructions;
   } catch { /* Use the same initial catalog as instruction management. */ }
-  return rows.map(row => ({ ...row, currency: currencies[row.currency] || row.currency }));
+  return rows.map(row => ({ ...normalizeInstructionBusiness(row), currency: currencies[row.currency] || row.currency }));
 }
 
-export interface InstructionCatalogRow {
+export interface InstructionCatalogRow extends InstructionBusinessConfiguration {
   code: string; name: string; type: string; unit: string;
   price: number; cost: number; currency: string;
   status: '启用' | '停用'; description: string;
 }
 
-export const instructionManagementCatalog: InstructionCatalogRow[] = [
+const legacyInstructionManagementCatalog: Omit<InstructionCatalogRow, keyof InstructionBusinessConfiguration>[] = [
   { code: 'FY20261010209', name: '开箱费（仅开箱）', type: '开箱费', unit: '箱', price: 0, cost: 0.8, currency: '美元', status: '启用', description: '客户要求开箱的开箱费用' },
   { code: 'FY20260904070', name: '重新包装费-多个产品', type: '重新包装费', unit: '个', price: 0, cost: 0.4, currency: '美元', status: '启用', description: '单箱多个产品，按$0.4/个、低消$4，产品…' },
   { code: 'FY20260904068', name: '出/入仓费', type: '出/入仓费', unit: 'Per Pallet', price: 0, cost: 10.5, currency: '美元', status: '启用', description: '货物入仓上架存储和出仓，按板收费' },
@@ -39,3 +39,5 @@ export const instructionManagementCatalog: InstructionCatalogRow[] = [
   { code: 'FY20260820011', name: '加急费-提柜', type: '加急费', unit: '柜', price: 0, cost: 300, currency: '美元', status: '启用', description: '指令加急' },
   { code: 'FY20260820010', name: '加急费-操作指令', type: '加急费', unit: '票', price: 0, cost: 150, currency: '美元', status: '启用', description: '该类指令加急，快递的操作指令费$150/票' },
 ];
+
+export const instructionManagementCatalog: InstructionCatalogRow[] = legacyInstructionManagementCatalog.map(normalizeInstructionBusiness);

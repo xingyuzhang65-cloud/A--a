@@ -1,6 +1,19 @@
 export type InstructionStatus = '启用' | '停用';
+export type InstructionBusinessAttribute = '操作指令' | '纯费用';
 
-export interface Instruction {
+export interface InstructionBusinessConfiguration {
+  businessAttribute: InstructionBusinessAttribute;
+  requiresPda: boolean;
+}
+
+/** Legacy rows keep their operational behavior; fee type never determines routing. */
+export function normalizeInstructionBusiness<T extends object>(row: T): Omit<T, keyof InstructionBusinessConfiguration> & InstructionBusinessConfiguration {
+  const config = row as { businessAttribute?: unknown; requiresPda?: unknown };
+  const businessAttribute = config.businessAttribute === '纯费用' ? '纯费用' : '操作指令';
+  return { ...row, businessAttribute, requiresPda: businessAttribute === '操作指令' && (typeof config.requiresPda === 'boolean' ? config.requiresPda : true) };
+}
+
+export interface Instruction extends InstructionBusinessConfiguration {
   id: string;
   code: string;
   name: string;
@@ -25,6 +38,8 @@ export interface InstructionFilters {
   code: string;
   type: string;
   status: string;
+  businessAttribute?: InstructionBusinessAttribute | '';
+  requiresPda?: '' | 'true' | 'false';
 }
 
 type InstructionSeed = [code: string, name: string, type: string, unit: string, cost: number, description: string];
@@ -57,6 +72,8 @@ export const INITIAL_INSTRUCTIONS: Instruction[] = seeds.map(([code, name, type,
   code,
   name,
   type,
+  businessAttribute: '操作指令',
+  requiresPda: true,
   unit,
   price: 0,
   cost,
@@ -67,10 +84,12 @@ export const INITIAL_INSTRUCTIONS: Instruction[] = seeds.map(([code, name, type,
 
 export function filterInstructions(rows: Instruction[], filters: InstructionFilters): Instruction[] {
   const code = filters.code.trim().toLowerCase();
-  return rows.filter(row => (
+  return rows.map(normalizeInstructionBusiness).filter(row => (
     (!code || row.code.toLowerCase().includes(code)) &&
     (!filters.type || filters.type === '全部' || row.type === filters.type) &&
-    (!filters.status || filters.status === '全部' || row.status === filters.status)
+    (!filters.status || filters.status === '全部' || row.status === filters.status) &&
+    (!filters.businessAttribute || row.businessAttribute === filters.businessAttribute) &&
+    (!filters.requiresPda || String(row.requiresPda) === filters.requiresPda)
   ));
 }
 
@@ -79,6 +98,8 @@ const fieldLabels: [keyof Instruction, string][] = [
   ['code', '费用代码'],
   ['name', '费用名称'],
   ['type', '费用类型'],
+  ['businessAttribute', '业务属性'],
+  ['requiresPda', '是否需要PDA操作'],
   ['unit', '计费单位'],
   ['price', '计费单价（元）'],
   ['cost', '成本单价（元）'],
@@ -87,7 +108,8 @@ const fieldLabels: [keyof Instruction, string][] = [
   ['description', '描述'],
 ];
 
-function displayValue(field: keyof Instruction, value: string | number): string {
+function displayValue(field: keyof Instruction, value: string | number | boolean): string {
+  if (field === 'requiresPda') return value ? '需要' : '不需要';
   if (field === 'currency') {
     const currencyLabels: Record<string, string> = { USD: '美元', CNY: '人民币', EUR: '欧元', GBP: '英镑', HKD: '港币' };
     return currencyLabels[String(value)] ?? String(value);
@@ -108,7 +130,7 @@ function csvCell(value: string | number): string {
 /** Return a BOM-prefixed CSV string ready for a UTF-8 Blob/download. */
 export function exportInstructionsCsv(rows: Instruction[]): string {
   const header = fieldLabels.map(([, label]) => csvCell(label)).join(',');
-  const body = rows.map(row => fieldLabels.map(([field]) => {
+  const body = rows.map(normalizeInstructionBusiness).map(row => fieldLabels.map(([field]) => {
     const value = row[field];
     return csvCell(typeof value === 'number' ? value : displayValue(field, value));
   }).join(','));
@@ -116,6 +138,8 @@ export function exportInstructionsCsv(rows: Instruction[]): string {
 }
 
 export function createInstructionChanges(before: Instruction, after: Instruction): InstructionLog['changes'] {
+  before = normalizeInstructionBusiness(before);
+  after = normalizeInstructionBusiness(after);
   return fieldLabels.flatMap(([field, label]) => before[field] === after[field] ? [] : [{
     field: label,
     before: displayValue(field, before[field]),

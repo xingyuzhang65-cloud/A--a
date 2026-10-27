@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import InstructionManagement from './components/InstructionManagement';
-import { INITIAL_INSTRUCTIONS, createInstructionChanges, exportInstructionsCsv, filterInstructions } from './instructionData';
+import { INITIAL_INSTRUCTIONS, createInstructionChanges, exportInstructionsCsv, filterInstructions, normalizeInstructionBusiness } from './instructionData';
 
 test('instruction filters combine trimmed case-insensitive codes and exact types/statuses', () => {
   const rows = INITIAL_INSTRUCTIONS.map((row, index) => index === 3 ? { ...row, status: '停用' as const } : row);
@@ -31,6 +31,30 @@ test('change logs contain only changed fields with readable labels and values', 
     { field: '币种', before: '美元', after: '人民币' },
     { field: '状态', before: '启用', after: '停用' },
   ]);
+});
+
+test('business and PDA settings migrate independently of fee type and reject contradictory pure-fee routing', () => {
+  const { businessAttribute, requiresPda, ...legacy } = { ...INITIAL_INSTRUCTIONS[0], price: 2.25, cost: 1.5 };
+  assert.deepEqual(normalizeInstructionBusiness(legacy), { ...legacy, businessAttribute: '操作指令', requiresPda: true });
+  assert.equal(normalizeInstructionBusiness({ ...legacy, businessAttribute: '纯费用', requiresPda: true }).requiresPda, false);
+  assert.equal(normalizeInstructionBusiness({ ...legacy, businessAttribute: '操作指令', requiresPda: false }).requiresPda, false);
+  const pureFee = { ...INITIAL_INSTRUCTIONS[0], businessAttribute: '纯费用' as const, requiresPda: false };
+  const systemOperation = { ...INITIAL_INSTRUCTIONS[1], type: pureFee.type, requiresPda: false };
+  const rows = [INITIAL_INSTRUCTIONS[0], pureFee, systemOperation];
+  const filters = { code: '', type: pureFee.type, status: '启用', requiresPda: 'false' as const };
+  assert.deepEqual(filterInstructions(rows, { ...filters, businessAttribute: '纯费用' }), [pureFee]);
+  assert.deepEqual(filterInstructions(rows, { ...filters, businessAttribute: '操作指令' }), [systemOperation]);
+});
+
+test('business and PDA values use readable labels in exports and audit logs', () => {
+  const before = INITIAL_INSTRUCTIONS[0], after = { ...before, businessAttribute: '纯费用' as const, requiresPda: false };
+  assert.deepEqual(createInstructionChanges(before, after), [
+    { field: '业务属性', before: '操作指令', after: '纯费用' },
+    { field: '是否需要PDA操作', before: '需要', after: '不需要' },
+  ]);
+  const csv = exportInstructionsCsv([after]);
+  assert.ok(csv.includes('"业务属性","是否需要PDA操作"'));
+  assert.ok(csv.includes('"纯费用","不需要"'));
 });
 
 test('instruction page renders required fields and restores saved data or recovers invalid storage', () => {

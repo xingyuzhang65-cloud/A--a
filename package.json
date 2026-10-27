@@ -9,7 +9,7 @@
     "start": "node dist/server.cjs",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test": "node --import ./test-assets.mjs --import tsx --test src/instructionData.test.ts src/instructionInteraction.test.tsx src/stagingData.test.ts src/stagingInteraction.test.tsx src/instructionListData.test.ts src/instructionListInteraction.test.tsx src/overseasReference.test.ts src/overseasRejection.test.tsx src/components/finance/financeData.test.ts src/components/finance/financeInteraction.test.tsx"
+    "test": "node --import ./test-assets.mjs --import tsx --test src/instructionData.test.ts src/instructionInteraction.test.tsx src/stagingData.test.ts src/stagingInteraction.test.tsx src/instructionListData.test.ts src/instructionListInteraction.test.tsx src/overseasReference.test.ts src/overseasRejection.test.tsx src/feeUnitPriceInteraction.test.tsx src/components/finance/financeData.test.ts src/components/finance/financeInteraction.test.tsx"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

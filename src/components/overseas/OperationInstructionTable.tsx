@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Eye, X } from 'lucide-react';
+import { Eye, Pencil, X } from 'lucide-react';
+import FeeUnitPriceEditor from './FeeUnitPriceEditor';
 import './OperationInstructionTable.css';
 
 export type OperationInstructionRow = {
@@ -22,6 +23,7 @@ type OperationInstructionTableProps = {
   rows: OperationInstructionRow[];
   onEdit?: (id: string) => void;
   onRemove?: (id: string) => void;
+  onSaveUnitPrice?: (id: string, unitPrice: number) => boolean;
   emptyText?: string;
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
@@ -41,8 +43,9 @@ function statusClass(status?: string) {
   return 'operation-instruction-status-neutral';
 }
 
-export default function OperationInstructionTable({ rows, onEdit, onRemove, emptyText = '暂无数据', selectedIds = [], onSelectionChange }: OperationInstructionTableProps) {
+export default function OperationInstructionTable({ rows, onEdit, onRemove, onSaveUnitPrice, emptyText = '暂无数据', selectedIds = [], onSelectionChange }: OperationInstructionTableProps) {
   const [preview, setPreview] = useState<PreviewImage | null>(null);
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const previewOrigin = useRef<HTMLElement | null>(null);
   const hasActions = Boolean(onEdit || onRemove);
@@ -92,7 +95,12 @@ export default function OperationInstructionTable({ rows, onEdit, onRemove, empt
             <td title={display(row.name)}>{display(row.name)}</td>
             <td title={display(row.type)}>{display(row.type)}</td>
             <td title={display(row.unit)}>{display(row.unit)}</td>
-            <td>{numberText(row.unitPrice)}</td>
+            <td>{editingPriceId === row.id && onSaveUnitPrice
+              ? <FeeUnitPriceEditor value={row.unitPrice} label={`计费单价${index + 1}`} onCancel={() => setEditingPriceId(null)} onSave={value => {
+                if (!onSaveUnitPrice(row.id, value)) return false;
+                setEditingPriceId(null); return true;
+              }} />
+              : <span className="operation-instruction-price">{numberText(row.unitPrice)}{onSaveUnitPrice && <button type="button" aria-label={`编辑计费单价${index + 1}`} title="编辑计费单价" onClick={() => setEditingPriceId(row.id)}><Pencil size={13} /></button>}</span>}</td>
             <td>{numberText(row.quantity)}</td>
             <td>{currency}</td>
             <td title={display(row.addedAt)}>{display(row.addedAt)}</td>

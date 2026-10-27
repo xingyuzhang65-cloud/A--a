@@ -29,6 +29,20 @@ test('latest inventory uses instruction management prices, currencies and enable
   assert.equal(catalog.some(row => row.code === second.code), false);
 });
 
+test('shared fee catalog retains business and PDA settings without deriving them from fee type', () => {
+  const first = INITIAL_INSTRUCTIONS[0];
+  localStorage.setItem('ans_instruction_management_v1', JSON.stringify({ instructions: [
+    { ...first, businessAttribute: '纯费用', requiresPda: false, price: 3.5 },
+  ] }));
+  let fee = getInventoryFeeCatalog().find(row => row.code === first.code)!;
+  assert.equal(fee.businessAttribute, '纯费用'); assert.equal(fee.requiresPda, false); assert.equal(fee.unitPrice, 3.5);
+  localStorage.setItem('ans_instruction_management_v1', JSON.stringify({ instructions: [
+    { ...first, businessAttribute: '操作指令', requiresPda: false },
+  ] }));
+  fee = getInventoryFeeCatalog().find(row => row.code === first.code)!;
+  assert.equal(fee.businessAttribute, '操作指令'); assert.equal(fee.requiresPda, false);
+});
+
 test('latest release orders appear once with itemized operations and retain workflow changes after reload', () => {
   const inventory = createInitialOverseasInventory();
   const source = inventory.records.find(row => row.status === '暂存' && row.cargoBoxes.some(box => box.status === '待处理'))!;

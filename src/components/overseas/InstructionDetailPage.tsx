@@ -13,6 +13,7 @@ import { getInventoryFeeCatalog, loadOverseasInventory } from './overseasStorage
 import InstructionWaybillInfo from './InstructionWaybillInfo';
 import InstructionCargoTransfers from './InstructionCargoTransfers';
 import InstructionFeeEditDialog from './InstructionFeeEditDialog';
+import { persistInstructionFeePrice } from './feeUnitPriceStore';
 import { loadInstructionCatalog } from './instructionManagementCatalog';
 import { getInstructionWaybillContext } from './instructionWaybillContext';
 import { getInstructionCargoRows } from './instructionCargoRows';
@@ -116,6 +117,7 @@ export default function InstructionDetailPage({ row, onClose, onUpdate }: {
     (preferred || focusables()[0] || top)?.focus();
     const handleKey = (event: globalThis.KeyboardEvent) => {
       if (nested === 'fee' || document.querySelector('.operation-instruction-preview')) return;
+      if (event.key === 'Escape' && event.target instanceof HTMLElement && event.target.closest('.operation-instruction-price-editor')) return;
       if (event.key === 'Escape') {
         event.preventDefault(); event.stopPropagation();
         if (nested) { fileReadId.current += 1; setReadingFile(false); setNested(null); setError(''); }
@@ -131,11 +133,11 @@ export default function InstructionDetailPage({ row, onClose, onUpdate }: {
     return () => { document.removeEventListener('keydown', handleKey, true); if (origin?.isConnected) origin.focus({preventScroll:true}); };
   }, [nested]);
 
-  function persist(next: InstructionDetailState): boolean {
+  function persist(next: InstructionDetailState, save = saveInstructionDetail): boolean {
     const updated = nowText();
     const saved = { ...next, updatedAt: updated };
     try {
-      saveInstructionDetail(row, saved);
+      save(row, saved);
       setState(saved);
       onUpdate?.({ updated, customerNote: saved.customerNote, internalRemark: saved.internalRemark, failureReason: saved.failureReason,
         boxSelectionMode:saved.boxSelectionMode||row.boxSelectionMode||'随机',
@@ -311,6 +313,9 @@ export default function InstructionDetailPage({ row, onClose, onUpdate }: {
             <div className="instruction-processing-toolbar"><span className="instruction-processing-count">待处理 {state.fees.length-doneOperations} 项，已处理 {doneOperations} 项</span><button type="button" className="mc-btn primary" disabled={!state.fees.some(fee=>selectedOperations.includes(fee.id))} onClick={()=>{setProcessingStatus('已处理');setError('');setNested('processing');}}>处理</button><span>已选 {state.fees.filter(fee=>selectedOperations.includes(fee.id)).length} 项</span></div>
             <OperationInstructionTable rows={state.fees.map((fee) => ({ ...fee, feeRemark: fee.remark, status: fee.status || row.status }))}
               selectedIds={selectedOperations} onSelectionChange={setSelectedOperations}
+              onSaveUnitPrice={['取消', '驳回'].includes(row.tab) ? undefined : (feeId, unitPrice) => persist({
+                ...state, feesEdited: true, fees: state.fees.map(fee => fee.id === feeId ? { ...fee, unitPrice } : fee),
+              }, (item, saved) => persistInstructionFeePrice(item, saved, feeId))}
               onEdit={canEdit ? openFee : undefined} onRemove={canEdit ? removeFee : undefined} />
             <div className="oi-fee-summary"><span>共 {state.fees.length} 条</span><strong>人民币合计 {amount(totalRmb)}</strong></div>
           </section>}
