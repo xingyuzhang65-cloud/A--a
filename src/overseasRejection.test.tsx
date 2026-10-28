@@ -94,3 +94,39 @@ test('cancelling rejection leaves workflow unchanged and a failed save keeps the
   failWrites = false; await click(btn('确认驳回'));
   assert.equal(saved().rows.filter((r: any) => r.rejectionReason === '请修正预约日期').length, 1);
 });
+
+test('confirmation and ordered cancellation are scoped, survive failures, and stay unavailable after warehouse processing', async () => {
+  assert.equal([...host.querySelectorAll('button')].some(el => el.textContent === '批量下单'), false);
+  await click(btn('确认下单'));
+  assert.equal(saved(), null, 'empty selection must not create a workflow transition');
+  await selectRows(2); await click(btn('确认下单'));
+  const confirmed = saved();
+  const confirmedIds = confirmed.logs.at(-1).ids;
+  assert.equal(confirmedIds.length, 2);
+  assert.ok(confirmed.rows.filter((r: any) => confirmedIds.includes(r.id)).every((r: any) => r.tab === '已下单' && r.status === '待处理'));
+  assert.match(confirmed.logs.at(-1).action, /确认下单/);
+  const clickTab = async (name: string) => { const found = [...host.querySelectorAll<HTMLButtonElement>('button')].find(el => el.textContent?.startsWith(name + '(')); assert.ok(found, name); await click(found); };
+  await clickTab('已下单');
+  await click(btn('取消下单'));
+  assert.equal(saved().logs.length, confirmed.logs.length);
+  const target = confirmed.rows.find((r: any) => confirmedIds.includes(r.id));
+  const check = host.querySelector<HTMLInputElement>(`[aria-label="选择${target.instructionNo}"]`)!;
+  assert.ok(check); await click(check);
+  failWrites = true; await click(btn('取消下单'));
+  assert.equal(saved().rows.find((r: any) => r.id === target.id).tab, '已下单');
+  assert.equal(saved().logs.length, confirmed.logs.length);
+  assert.equal(check.checked, true, 'a failed cancellation must preserve selection for retry');
+  failWrites = false; await click(btn('取消下单'));
+  const cancelled = saved();
+  assert.equal(cancelled.rows.find((r: any) => r.id === target.id).tab, '取消');
+  assert.equal(cancelled.rows.find((r: any) => r.id === target.id).status, '已取消');
+  assert.deepEqual(cancelled.logs.at(-1).ids, [target.id]);
+  assert.match(cancelled.logs.at(-1).action, /取消下单/);
+  for (const original of confirmed.rows.filter((r: any) => r.id !== target.id)) assert.deepEqual(cancelled.rows.find((r: any) => r.id === original.id), original, 'unselected instructions must remain unchanged');
+  for (const name of ['处理中', '已完成', '待确认']) { await clickTab(name); assert.equal([...host.querySelectorAll('button')].some(el => el.textContent === '取消下单'), false); }
+  await act(async () => root.unmount()); root = createRoot(host);
+  await act(async () => root.render(<InstructionList />));
+  await clickTab('取消');
+  assert.ok(host.querySelector(`[aria-label="选择${target.instructionNo}"]`));
+  assert.equal(saved().logs.length, confirmed.logs.length + 1, 'reload must not duplicate cancellation logs');
+});

@@ -519,7 +519,7 @@ test('the overseas instruction list menu preserves order, deep links, tab closin
   assert.equal(dom.window.location.hash, '#instruction-list');
 });
 
-test('the actual staging order form supports batch ordering, prevents ordered cancellation, and persists after reload', async () => {
+test('the actual staging order form supports confirmation, ordered cancellation, and persists after reload', async () => {
   const { default: App } = await import('./App');
   const { loadOverseasInventory, OVERSEAS_INVENTORY_STORAGE_KEY } = await import('./components/overseas/overseasStorageInventoryData');
   const { loadListRows, readListState } = await import('./components/overseas/instructionListState');
@@ -543,22 +543,28 @@ test('the actual staging order form supports batch ordering, prevents ordered ca
   assert.ok(first);
   await click(get<HTMLInputElement>(`[aria-label="选择${first.instructionNo}"]`));
   assert.equal([...host.querySelectorAll('button')].some(item => item.textContent === '已确认'), false);
-  await click(button('批量下单'));
+  await click(button('确认下单'));
   assert.equal(readListState().rows.find(row => row.id === first.id)?.tab, '已下单');
   assert.equal(readListState().rows.find(row => row.id === first.id)?.status, '待处理');
   const workflowTab = (name: string) => [...host.querySelectorAll<HTMLButtonElement>('main[aria-label="指令列表"] button')].find(item => item.textContent?.startsWith(name + '('))!;
   await click(workflowTab('已下单'));
+  await click(button('取消下单'));
+  assert.equal(readListState().logs.length, 1, 'empty selection must not cancel orders');
   await click(get<HTMLInputElement>(`[aria-label="选择${first.instructionNo}"]`));
-  assert.equal([...host.querySelectorAll('button')].some(item => item.textContent === '取消下单'), false);
-  assert.equal(readListState().rows.find(row => row.id === first.id)?.tab, '已下单');
+  await click(button('取消下单'));
+  assert.equal(readListState().rows.find(row => row.id === first.id)?.tab, '取消');
+  assert.equal(readListState().rows.find(row => row.id === first.id)?.status, '已取消');
+  assert.equal(readListState().logs.at(-1)?.action, '已取消下单 1 条指令');
+  assert.deepEqual(readListState().logs.at(-1)?.ids, [first.id]);
   await act(async () => root.unmount());
   root = createRoot(host);
   await act(async () => root.render(<App />));
-  await click(workflowTab('已下单'));
+  await click(workflowTab('取消'));
   assert.ok(get<HTMLInputElement>(`[aria-label="选择${first.instructionNo}"]`));
   assert.equal([...host.querySelectorAll('button')].some(item => item.textContent === '取消下单'), false);
-  assert.equal(readListState().logs.length, 1, 'only ordering is logged; ordered records cannot be cancelled');
+  assert.equal(readListState().logs.length, 2, 'confirmation and cancellation each create one audit log');
   assert.equal(sourceState().orders.length, 1, 'reloading must not duplicate the release');
+  assert.equal(loadListRows([]).find(row => row.id === first.id)?.tab, '取消', 'inventory-derived rows must not be revived on reload');
   await click(workflowTab('待确认'));
   const pendingCheckboxes = [...host.querySelectorAll<HTMLInputElement>('main[aria-label="指令列表"] tbody input[type="checkbox"]')];
   const pickedNumbers = pendingCheckboxes.slice(0, 2).map(input => input.getAttribute('aria-label')!.slice(2));
