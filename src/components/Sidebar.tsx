@@ -25,7 +25,7 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     '业务运单': true,
     '客服运单管理': false,
-    '海外中转单': ['instruction-list', 'instruction-management', 'staging-management'].includes(currentTab),
+    '海外中转单': ['instruction-list', 'instruction-management', 'staging-management', 'intercept-management'].includes(currentTab),
     '财务运单': false,
     '工单': false,
     '服务订单': false,
@@ -33,7 +33,7 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
   });
 
   useEffect(() => {
-    if (['instruction-list', 'instruction-management', 'staging-management'].includes(currentTab)) {
+    if (['instruction-list', 'instruction-management', 'staging-management', 'intercept-management'].includes(currentTab)) {
       setExpandedGroups(groups => ({ ...groups, '海外中转单': true }));
     }
   }, [currentTab]);
@@ -73,6 +73,7 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
       id: 'overseas-transit',
       children: [
         { name: '暂存管理', icon: Warehouse, id: 'staging-management' },
+        { name: '拦截管理', icon: ShieldAlert, id: 'intercept-management' },
         { name: '指令列表', icon: ClipboardList, id: 'instruction-list' },
         { name: '指令管理', icon: FileCheck, id: 'instruction-management' }
       ]

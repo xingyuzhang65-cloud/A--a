@@ -477,7 +477,8 @@ test('the overseas instruction list menu preserves order, deep links, tab closin
   const listIndex = items.findIndex(item => item.textContent === '指令列表');
   assert.ok(listIndex >= 0);
   assert.equal(items.findIndex(item => item.textContent === '指令管理'), listIndex + 1);
-  assert.equal(items.findIndex(item => item.textContent === '暂存管理'), listIndex - 1);
+  assert.equal(items.findIndex(item => item.textContent === '暂存管理'), listIndex - 2);
+  assert.equal(items.findIndex(item => item.textContent === '拦截管理'), listIndex - 1);
   assert.ok(!sidebar.textContent?.includes('中转记录'));
   await click(button('指令列表', sidebar));
   assert.equal(dom.window.location.hash, '#instruction-list');

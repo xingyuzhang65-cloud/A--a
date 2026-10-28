@@ -738,7 +738,7 @@ function normalizedDraft(draft: ReleaseDraft): ReleaseDraft {
     cleaned.postalCode='';cleaned.company='';cleaned.address='';cleaned.services=[];cleaned.serviceRemark='';cleaned.overseasRemark='';
     if(cleaned.kind==='自提')cleaned.deliveryMethod='客户自提';
     if(cleaned.kind!=='自提')cleaned.pickupAt='';
-    if(cleaned.kind!=='销毁')cleaned.destroyBoxNo='';
+    cleaned.destroyBoxNo='';
   } else {
     cleaned.pickupAt='';cleaned.destroyBoxNo='';
     if(cleaned.waybillType!=='FBA'){cleaned.shipmentId='';cleaned.referenceId='';}
@@ -775,7 +775,7 @@ export function validateInventoryRelease(state: InventoryState,recordIds: string
     if(!draft.deliveryMethod.trim())return '请选择派送方式';
     if(!/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2})?)?$/.test(draft.scheduledAt)||!Number.isFinite(Date.parse(draft.scheduledAt)))return '请选择有效的预约发货时间';
   }
-  if(draft.kind==='销毁'&&!draft.destroyBoxNo.trim())return '请填写销毁箱号';
+
   if(draft.kind==='自提'&&draft.pickupAt&&(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(draft.pickupAt)||!Number.isFinite(Date.parse(draft.pickupAt))))return '请填写有效的预计提货时间';
   if(draft.instructions.some(f=>!validFee(f)||!f.name.trim()||!f.type.trim()||!f.unit.trim()||!f.currency.trim()))return '请完整填写操作指令，单价/数量不可为负数且汇率须大于0';
   if(draft.attachments.some(a=>!validAttachment(a)))return '附件信息无效，请重新上传';

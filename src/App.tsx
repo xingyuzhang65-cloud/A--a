@@ -11,6 +11,7 @@ import InvoiceModal from './components/InvoiceModal';
 import ManagementCenter, { DEFAULT_MANAGEMENT_USERS } from './components/ManagementCenter';
 import InstructionManagement from './components/InstructionManagement';
 import OverseasPage from './components/overseas/OverseasPage';
+import InterceptManagement from './components/overseas/InterceptManagement';
 import { INITIAL_WAYBILLS } from './data';
 import { Waybill, FilterParams, WaybillStatus, User } from './types';
 import { ShieldCheck, Info, Package, RefreshCw, Layers } from 'lucide-react';
@@ -20,7 +21,7 @@ import { appendTradeModeLog, seedTradeModeLogs } from './components/TradeModeLog
 export default function App() {
   const [currentTab, setCurrentTab] = useState<string>(() => {
     const hashTab = window.location.hash.slice(1);
-    return ['instruction-list', 'instruction-management', 'staging-management'].includes(hashTab) ? hashTab : 'waybills';
+    return ['instruction-list', 'instruction-management', 'staging-management', 'intercept-management'].includes(hashTab) ? hashTab : 'waybills';
   });
   const [globalNav, setGlobalNav] = useState<string>('waybill-manage');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
@@ -28,14 +29,14 @@ export default function App() {
   const navigateTab = (tab: string) => {
     setCurrentTab(tab);
     setGlobalNav(tab.startsWith('management-') ? 'admin-center' : 'waybill-manage');
-    const hash = ['instruction-list', 'instruction-management', 'staging-management'].includes(tab) ? `#${tab}` : '';
+    const hash = ['instruction-list', 'instruction-management', 'staging-management', 'intercept-management'].includes(tab) ? `#${tab}` : '';
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${hash}`);
   };
 
   useEffect(() => {
     const handleHashChange = () => {
       const hashTab = window.location.hash.slice(1);
-      if (['instruction-list', 'instruction-management', 'staging-management'].includes(hashTab)) {
+      if (['instruction-list', 'instruction-management', 'staging-management', 'intercept-management'].includes(hashTab)) {
         setCurrentTab(hashTab);
         setGlobalNav('waybill-manage');
       } else if (!window.location.hash) {
@@ -324,6 +325,7 @@ export default function App() {
                 <button type="button" aria-label="关闭指令管理页签" onClick={() => navigateTab('waybills')} className="text-[12px] opacity-70 hover:opacity-100 cursor-pointer">×</button>
               </div>
             )}
+            {currentTab === 'intercept-management' && <div className="px-4 h-8 text-xs font-bold rounded-md flex items-center gap-2.5 bg-[#5c67f2] text-white shadow-sm shrink-0">拦截管理<button type="button" aria-label="关闭拦截管理页签" onClick={() => navigateTab('staging-management')}>×</button></div>}
             {currentTab === 'staging-management' && (
               <div className="px-4 h-8 text-xs font-bold rounded-md flex items-center gap-2.5 bg-[#5c67f2] text-white shadow-sm shrink-0">
                 暂存管理
@@ -367,6 +369,8 @@ export default function App() {
               <motion.div key="instruction-management" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="h-full min-h-[500px]">
                 <InstructionManagement />
               </motion.div>
+            ) : currentTab === 'intercept-management' ? (
+              <motion.div key="intercept-management" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="h-full min-h-[600px]"><InterceptManagement /></motion.div>
             ) : currentTab === 'staging-management' ? (
               <motion.div key="staging-management" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="h-full min-h-[500px]">
                 <OverseasPage view="storage" waybills={waybills} />
