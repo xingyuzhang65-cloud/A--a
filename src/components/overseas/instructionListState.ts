@@ -4,7 +4,7 @@ import { assignInstructionNumbers } from './instructionNumbers';
 import type { InstructionListRow } from './instructionListTypes';
 
 export const LIST_STATE_KEY = 'ans_overseas_instruction_list_v2';
-export interface ListLog { at: string; ids: string[]; action: string }
+export interface ListLog { at: string; ids: string[]; action: string; rejectionReason?: string }
 export function readListState(): { rows: InstructionListRow[]; logs: ListLog[] } {
   try {
     const saved = JSON.parse(localStorage.getItem(LIST_STATE_KEY) || 'null');
@@ -36,7 +36,7 @@ export function loadListRows(seed: InstructionListRow[]): InstructionListRow[] {
     const first = records[0];
     if (!first) continue;
     byId.set(id, {
-      id, tab: '待确认', waybill: first.waybillNo || first.inbound, instructionNo: order.applicationNo,
+      id, tab: '待确认', waybill: first.waybillNo || '—', instructionNo: order.applicationNo,
       names: order.instructions.length ? order.instructions.map(fee => fee.name) : [order.kind],
       created: order.createdAt, updated: order.createdAt, shipment: order.shipmentId || '-', reference: order.referenceId || '-',
       status: '待处理', customer: first.customer, warehouse: first.warehouseCode || '-', zip: order.postalCode || '-',

@@ -476,7 +476,7 @@ test('the overseas instruction list menu preserves order, deep links, tab closin
   const items = [...sidebar.querySelectorAll<HTMLButtonElement>('button')];
   const listIndex = items.findIndex(item => item.textContent === '指令列表');
   assert.ok(listIndex >= 0);
-  assert.equal(items.findIndex(item => item.textContent === '指令管理'), listIndex + 1);
+  assert.equal(items.findIndex(item => item.textContent === '费用管理'), listIndex + 1);
   assert.equal(items.findIndex(item => item.textContent === '暂存管理'), listIndex - 2);
   assert.equal(items.findIndex(item => item.textContent === '拦截管理'), listIndex - 1);
   assert.ok(!sidebar.textContent?.includes('中转记录'));
@@ -492,7 +492,7 @@ test('the overseas instruction list menu preserves order, deep links, tab closin
   await act(async () => root.render(<App />));
   assert.equal(get('h1').textContent, '指令列表');
   assert.ok(button('指令列表', get('#ans-sidebar')));
-  for (const [hash, title] of [['instruction-management', '指令管理'], ['staging-management', '暂存管理'], ['instruction-list', '指令列表']]) {
+  for (const [hash, title] of [['instruction-management', '费用管理'], ['staging-management', '暂存管理'], ['instruction-list', '指令列表']]) {
     dom.window.history.replaceState(null, '', `/A--a/#${hash}`);
     await act(async () => dom.window.dispatchEvent(new dom.window.HashChangeEvent('hashchange')));
     assert.equal(get('h1').textContent, title);
@@ -504,10 +504,19 @@ test('the overseas instruction list menu preserves order, deep links, tab closin
   await act(async () => dom.window.dispatchEvent(new dom.window.HashChangeEvent('hashchange')));
   assert.equal(get('h1').textContent, '指令列表');
   await click(button('财务管理'));
-  assert.equal(dom.window.location.hash, '', 'top-level navigation must clear the previous deep link');
+  assert.equal(dom.window.location.hash, '#finance-approval', 'finance navigation opens its own deep link');
   assert.equal(dom.window.location.pathname, '/A--a/');
   assert.equal(dom.window.location.search, '?v=instruction-list-20261019');
-  assert.equal(host.querySelector('h1'), null);
+  assert.equal(get('h1').textContent, '指令费用审批');
+  await click(button('指令费用明细', get('#ans-sidebar')));
+  assert.equal(dom.window.location.hash, '#finance-fees');
+  assert.equal(get('h1').textContent, '指令费用明细');
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  await act(async () => root.render(<App />));
+  assert.equal(get('h1').textContent, '指令费用明细');
+  await click(button('返回指令列表', get('#ans-sidebar')));
+  assert.equal(dom.window.location.hash, '#instruction-list');
 });
 
 test('the actual staging order form supports batch ordering, prevents ordered cancellation, and persists after reload', async () => {
@@ -556,9 +565,13 @@ test('the actual staging order form supports batch ordering, prevents ordered ca
   await click(pendingCheckboxes[0]);
   await click(pendingCheckboxes[1]);
   await click(button('批量驳回'));
+  const rejectionDialog = get<HTMLElement>('[role="dialog"]', dom.window.document);
+  await setValue(get<HTMLTextAreaElement>('#rejection-reason', rejectionDialog), '申请资料不完整，请补充后重新申请');
+  await click(button('确认驳回', rejectionDialog));
   const rejected = readListState().rows.filter(row => pickedNumbers.includes(row.instructionNo));
   assert.equal(rejected.length, 2);
   assert.ok(rejected.every(row => row.tab === '驳回' && row.status === '已驳回'));
+  assert.ok(rejected.every(row => row.rejectionReason === '申请资料不完整，请补充后重新申请'));
   assert.ok(readListState().rows.some(row => row.tab === '待确认'), 'unselected rows remain pending');
   assert.ok(readListState().logs.at(-1)?.action.includes('2'));
 });
