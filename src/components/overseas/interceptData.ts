@@ -15,7 +15,7 @@ export interface InterceptTask {
 }
 export const INTERCEPT_STORAGE_KEY='ans-overseas-intercepts-v1';
 export const interceptTabs:InterceptTab[]=['待审批','拦截中','已完成','取消/驳回','全部'];
-export const emptyInterceptFilters={no:'',waybillNo:'',customerOrderNo:'',latestTracking:'',customer:'',reconciliationStatus:'',from:'',to:''};
+export const emptyInterceptFilters={no:'',waybillNo:'',customerOrderNo:'',latestTracking:'',customer:'',from:'',to:''};
 export type InterceptFilters=typeof emptyInterceptFilters;
 export const nowText=()=>new Date().toLocaleString('sv-SE');
 export const uid=()=>crypto.randomUUID();
@@ -47,7 +47,7 @@ export function forecastStatus(task:InterceptTask){return task.forecastStatus||(
 export function filterIntercepts(tasks:InterceptTask[],filters:InterceptFilters,tab:InterceptTab){
  const includes=(actual:string,expected:string)=>(actual||'').toLowerCase().includes(expected.trim().toLowerCase());
  return tasks.filter(task=>matchesInterceptTab(task,tab)&&(['no','waybillNo','customerOrderNo','latestTracking'] as const).every(key=>includes(task[key],filters[key]))
- &&(!filters.customer||task.customer===filters.customer)&&(!filters.reconciliationStatus||task.reconciliationStatus===filters.reconciliationStatus)
+ &&(!filters.customer||task.customer===filters.customer)
  &&(!filters.from||task.appliedAt.slice(0,10)>=filters.from)&&(!filters.to||task.appliedAt.slice(0,10)<=filters.to));
 }
 const actionNames:Record<InterceptAction,string>={approve:'审批通过',reject:'审批驳回',cancel:'取消拦截',success:'拦截成功',failure:'拦截失败',remark:'内部备注'};
@@ -93,11 +93,11 @@ export function persistIntercepts(tasks:InterceptTask[],inventory?:InventoryStat
  try{localStorage.setItem(INTERCEPT_STORAGE_KEY,JSON.stringify(tasks));if(inventory)localStorage.setItem(OVERSEAS_INVENTORY_STORAGE_KEY,JSON.stringify(inventory));}
  catch{try{before===null?localStorage.removeItem(INTERCEPT_STORAGE_KEY):localStorage.setItem(INTERCEPT_STORAGE_KEY,before);if(inventory)beforeInventory===null?localStorage.removeItem(OVERSEAS_INVENTORY_STORAGE_KEY):localStorage.setItem(OVERSEAS_INVENTORY_STORAGE_KEY,beforeInventory);}catch{}throw new Error('保存失败，本地存储空间不足或不可用，请减少附件后重试');}
 }
-export type InterceptColumnKey='customer'|'no'|'waybillNo'|'customerOrderNo'|'latestTracking'|'reason'|'boxes'|'instructionCount'|'instructions'|'reconciliationStatus'|'customerRemark'|'remark'|'applicant'|'appliedAt'|'result'|'failureReason'|'status'|'terminationReason';
+export type InterceptColumnKey='customer'|'no'|'waybillNo'|'customerOrderNo'|'latestTracking'|'reason'|'boxes'|'instructionCount'|'instructions'|'customerRemark'|'remark'|'applicant'|'appliedAt'|'result'|'failureReason'|'status'|'terminationReason';
 export function getInterceptColumns(tab:InterceptTab):{key:InterceptColumnKey;label:string}[]{
- const columns:{key:InterceptColumnKey;label:string}[]=[{key:'customer',label:'客户名称'},{key:'no',label:'拦截单号'},{key:'waybillNo',label:'运单号'},{key:'customerOrderNo',label:'客户单号'},{key:'latestTracking',label:'最新运踪'},{key:'reason',label:'拦截原因'},{key:'boxes',label:'拦截箱数'},{key:'instructionCount',label:'指令数量'},{key:'instructions',label:'指令'},{key:'reconciliationStatus',label:'核销状态'},{key:'customerRemark',label:'客户备注'},{key:'remark',label:'内部备注'},{key:'applicant',label:'申请人'},{key:'appliedAt',label:'申请时间'}];
- if(tab==='已完成'||tab==='全部')columns.push({key:'result',label:'拦截结果'},{key:'failureReason',label:'失败原因'});
- if(tab==='取消/驳回'||tab==='全部')columns.push({key:'status',label:'拦截状态'},{key:'terminationReason',label:'取消/驳回原因'});
+ const columns:{key:InterceptColumnKey;label:string}[]=[{key:'customer',label:'客户名称'},{key:'no',label:'拦截单号'},{key:'waybillNo',label:'运单号'},{key:'customerOrderNo',label:'客户单号'},{key:'latestTracking',label:'最新运踪'},{key:'reason',label:'拦截原因'},{key:'boxes',label:'拦截箱数'},{key:'instructionCount',label:'指令数量'},{key:'instructions',label:'指令'},{key:'customerRemark',label:'客户备注'},{key:'remark',label:'内部备注'},{key:'applicant',label:'申请人'},{key:'appliedAt',label:'申请时间'}];
+ if(tab==='已完成')columns.push({key:'result',label:'拦截结果'},{key:'failureReason',label:'失败原因'});
+ if(tab==='取消/驳回')columns.push({key:'terminationReason',label:'取消/驳回原因'});
  return columns;
 }
 export function getInterceptCellText(task:InterceptTask,key:InterceptColumnKey):string{
