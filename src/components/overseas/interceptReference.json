@@ -1,0 +1,185 @@
+[
+  {
+    "no": "202608040001",
+    "waybillNo": "YDH2026080401",
+    "customerOrderNo": "CO-20260804-01",
+    "latestTracking": "2026-08-04 08:30 到达洛杉矶港，等待清关",
+    "fees": [
+      {
+        "id": 1,
+        "name": "卸柜费",
+        "type": "操作费",
+        "unit": "箱",
+        "unitPrice": 15,
+        "quantity": 11,
+        "currency": "人民币",
+        "total": 165,
+        "addedAt": "2026-08-04 09:20:00",
+        "addedBy": "系统",
+        "description": "按箱计费"
+      },
+      {
+        "id": 2,
+        "name": "仓储费",
+        "type": "仓储费",
+        "unit": "票",
+        "unitPrice": 50,
+        "quantity": 1,
+        "currency": "人民币",
+        "total": 50,
+        "addedAt": "2026-08-04 09:20:00",
+        "addedBy": "系统",
+        "description": "暂存期间仓储费"
+      }
+    ],
+    "instructionFees": [
+      {
+        "code": "FY202509260004",
+        "name": "拦截-免仓7天",
+        "type": "仓储费",
+        "unit": "票",
+        "price": "4",
+        "quantity": "1",
+        "currency": "人民币",
+        "exchangeRate": "1",
+        "description": "提柜入仓当天起算",
+        "addedAt": "2026-08-04 09:20:00",
+        "addedBy": "系统"
+      }
+    ],
+    "customerNote": "请尽快处理拦截申请",
+    "internalRemark": "需在8月7日前完成处理",
+    "attachments": [
+      "拦截申请-20260804-01.pdf",
+      "客户确认邮件.pdf"
+    ]
+  },
+  {
+    "no": "202608040002",
+    "waybillNo": "YDH2026080402",
+    "customerOrderNo": "CO-20260804-02",
+    "latestTracking": "2026-08-03 15:00 已入库美仓1号仓",
+    "fees": [
+      {
+        "id": 3,
+        "name": "卸柜费",
+        "type": "操作费",
+        "unit": "箱",
+        "unitPrice": 12,
+        "quantity": 4,
+        "currency": "人民币",
+        "total": 48,
+        "addedAt": "2026-08-04 10:08:00",
+        "addedBy": "系统",
+        "description": "按箱计费"
+      }
+    ],
+    "instructionFees": [],
+    "customerNote": "订单信息待客户复核",
+    "internalRemark": "",
+    "attachments": []
+  },
+  {
+    "no": "202608030015",
+    "waybillNo": "YDH2026080303",
+    "customerOrderNo": "CO-20260803-03",
+    "latestTracking": "2026-08-03 12:00 货物在库，拦截中",
+    "fees": [
+      {
+        "id": 4,
+        "name": "拦截操作费",
+        "type": "操作费",
+        "unit": "票",
+        "unitPrice": 200,
+        "quantity": 1,
+        "currency": "人民币",
+        "total": 200,
+        "addedAt": "2026-08-03 15:35:00",
+        "addedBy": "仓库-李明",
+        "description": "拦截操作人工费"
+      }
+    ],
+    "instructionFees": [
+      {
+        "code": "FY202509260005",
+        "name": "拦截-免仓8-90天",
+        "type": "仓储费",
+        "unit": "票",
+        "price": "3",
+        "quantity": "1",
+        "currency": "人民币",
+        "exchangeRate": "1",
+        "description": "按1级单价收取",
+        "addedAt": "2026-08-03 15:35:00",
+        "addedBy": "仓库-李明"
+      }
+    ],
+    "customerNote": "调整出库计划中",
+    "internalRemark": "重点客户订单，需优先处理",
+    "attachments": [
+      "客户邮件截图.png"
+    ]
+  },
+  {
+    "no": "202608020009",
+    "waybillNo": "YDH2026080204",
+    "customerOrderNo": "CO-20260802-04",
+    "latestTracking": "2026-08-02 14:00 已转入暂存库位 A02-03",
+    "fees": [
+      {
+        "id": 5,
+        "name": "拦截操作费",
+        "type": "操作费",
+        "unit": "票",
+        "quantity": 1,
+        "unitPrice": 200,
+        "currency": "人民币",
+        "total": 200,
+        "addedAt": "2026-08-02 11:15:00",
+        "addedBy": "仓库-王强",
+        "description": "拦截操作费用"
+      },
+      {
+        "id": 6,
+        "name": "暂存仓储费",
+        "type": "仓储费",
+        "unit": "箱",
+        "quantity": 2,
+        "unitPrice": 30,
+        "currency": "人民币",
+        "total": 60,
+        "addedAt": "2026-08-02 13:47:00",
+        "addedBy": "系统",
+        "description": "暂存库位每日仓储费"
+      }
+    ],
+    "instructionFees": [],
+    "customerNote": "等待客户重新下单",
+    "internalRemark": "",
+    "attachments": [
+      "拦截申请单.pdf"
+    ]
+  },
+  {
+    "no": "202608010004",
+    "waybillNo": "YDH2026080105",
+    "customerOrderNo": "CO-20260801-05",
+    "latestTracking": "2026-08-01 16:00 货物已完成出库，已送达",
+    "fees": [],
+    "instructionFees": [],
+    "customerNote": "",
+    "internalRemark": "",
+    "attachments": []
+  },
+  {
+    "no": "202607310018",
+    "waybillNo": "YDH2026073106",
+    "customerOrderNo": "CO-20260731-06",
+    "latestTracking": "2026-07-31 09:00 已取消，货物正常出库",
+    "fees": [],
+    "instructionFees": [],
+    "customerNote": "客户已自行调整订单",
+    "internalRemark": "",
+    "attachments": []
+  }
+]

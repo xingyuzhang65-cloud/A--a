@@ -1,46 +1,53 @@
+import reference from './interceptReference.json';
 ﻿import seeds from './interceptSeeds.json';
 import { getInventoryFeeCatalog, loadOverseasInventory, OVERSEAS_INVENTORY_STORAGE_KEY, type InventoryState, type StorageFeeLine, type StorageAttachment } from './overseasStorageInventoryData';
 export type InterceptStatus = '待审批'|'拦截中'|'拦截成功'|'拦截失败'|'已取消'|'已驳回';
 export type InterceptTab = '全部'|'待审批'|'拦截中'|'已完成'|'取消/驳回';
 export type InterceptAction = 'approve'|'reject'|'cancel'|'success'|'failure'|'remark';
 export interface InterceptLog { time:string; user:string; action:string; change:string; note:string }
-export interface InterceptAttachment extends StorageAttachment { category:string; visible:boolean; uploadedAt:string; uploadedBy:string }
+export interface InterceptAttachment extends StorageAttachment { category:string; visible:boolean; uploadedAt:string; uploadedBy:string; blobKey?:string }
 export interface InterceptTask {
- id:number; no:string; waybill:string; container:string; system:string; customer:string; source:string; warehouse:string;
+ id:number; no:string; waybillNo:string; customerOrderNo:string; latestTracking:string; waybill:string; container:string; system:string; customer:string; source:string; warehouse:string;
  cargoStatus:string; inventoryStatus:string; outboundStatus:string; boxes:number; status:InterceptStatus; interceptType:string;
  reconciliationStatus:string; forecastStatus?:string; reason:string; customerRemark:string; remark:string; applicant:string; appliedAt:string;
  handler:string; handleAt:string; failReason:string; terminationReason:string; actualBoxes:string; storageNo:string; resultRemark:string;
- fees:StorageFeeLine[]; attachments:InterceptAttachment[]; logs:InterceptLog[];
+ fees:StorageFeeLine[]; charges:StorageFeeLine[]; attachments:InterceptAttachment[]; logs:InterceptLog[];
 }
 export const INTERCEPT_STORAGE_KEY='ans-overseas-intercepts-v1';
 export const interceptTabs:InterceptTab[]=['待审批','拦截中','已完成','取消/驳回','全部'];
-export const emptyInterceptFilters={no:'',waybill:'',container:'',system:'',customer:'',source:'',interceptType:'',status:'',forecastStatus:'',reconciliationStatus:'',from:'',to:''};
+export const emptyInterceptFilters={no:'',waybillNo:'',customerOrderNo:'',latestTracking:'',customer:'',reconciliationStatus:'',from:'',to:''};
 export type InterceptFilters=typeof emptyInterceptFilters;
 export const nowText=()=>new Date().toLocaleString('sv-SE');
 export const uid=()=>crypto.randomUUID();
+function referenceFees(no:string,rows:Record<string,unknown>[]):StorageFeeLine[]{
+ return rows.map((row,index)=>({id:'charge-'+no+'-'+index,code:String(row.code||''),name:String(row.name||''),type:String(row.type||'操作费'),unit:String(row.unit||'票'),currency:String(row.currency||'人民币'),exchangeRate:Number(row.exchangeRate||1),unitPrice:Number(row.unitPrice??row.price??0),quantity:Number(row.quantity??1),feeRemark:String(row.remark||row.description||''),instructionRemark:String(row.description||''),billingTime:String(row.billingTime||row.addedAt||''),addedAt:String(row.addedAt||''),addedBy:String(row.addedBy||'系统'),status:row.status==='已处理'?'已处理':'待处理'}));
+}
+export function normalizeIntercept(task:InterceptTask):InterceptTask {
+ const ref=reference.find(row=>row.no===task.no);
+ return {...task,status:(String(task.status)==='已确认'?'拦截中':task.status),waybillNo:task.waybillNo??ref?.waybillNo??task.waybill??'',customerOrderNo:task.customerOrderNo??ref?.customerOrderNo??'',latestTracking:task.latestTracking??ref?.latestTracking??'',charges:Array.isArray(task.charges)?task.charges:referenceFees(task.no,ref?.fees||[])};
+}
 export function createInitialIntercepts():InterceptTask[]{
  const catalog=getInventoryFeeCatalog();
  const template=catalog.find(row=>row.name.includes('拦截'));
  return seeds.map(seed=>{
   const status=({'待处理':'待审批','已确认':'拦截中','已完成':'拦截成功'} as Record<string,InterceptStatus>)[seed.status]||seed.status as InterceptStatus;
-  return {...seed,status,interceptType:('interceptType' in seed?String(seed.interceptType):'')||(seed.cargoStatus==='未拆柜'?'拆柜前拦截':'拆柜后拦截'),
+  return normalizeIntercept({...seed,status,waybillNo:reference.find(r=>r.no===seed.no)?.waybillNo||seed.waybill,customerOrderNo:reference.find(r=>r.no===seed.no)?.customerOrderNo||'',latestTracking:reference.find(r=>r.no===seed.no)?.latestTracking||'',charges:referenceFees(seed.no,reference.find(r=>r.no===seed.no)?.fees||[]),interceptType:('interceptType' in seed?String(seed.interceptType):'')||(seed.cargoStatus==='未拆柜'?'拆柜前拦截':'拆柜后拦截'),
    terminationReason:('terminationReason' in seed?String(seed.terminationReason):'')||seed.failReason||'',
-   fees:template?[{...template,id:'INT-'+seed.no+'-fee',quantity:1,images:[]}]:[],
-   attachments:seed.attachment&&seed.attachment!=='-'?[{id:'attachment-'+seed.id,name:seed.attachment,size:0,type:'',category:'其他',visible:true,uploadedAt:seed.appliedAt,uploadedBy:seed.applicant}]:[]};
+   fees:reference.some(r=>r.no===seed.no)?referenceFees(seed.no,reference.find(r=>r.no===seed.no)?.instructionFees||[]):template?[{...template,id:'INT-'+seed.no+'-fee',quantity:1,images:[]}]:[],
+   attachments:seed.attachment&&seed.attachment!=='-'?[{id:'attachment-'+seed.id,name:seed.attachment,size:0,type:'',category:'其他',visible:true,uploadedAt:seed.appliedAt,uploadedBy:seed.applicant}]:[]});
  });
 }
 export function loadIntercepts():InterceptTask[]{
  try{const saved=JSON.parse(localStorage.getItem(INTERCEPT_STORAGE_KEY)||'null');
- if(Array.isArray(saved)&&saved.every(t=>t&&Number.isInteger(t.id)&&typeof t.no==='string'&&['待审批','拦截中','拦截成功','拦截失败','已取消','已驳回'].includes(t.status)&&Array.isArray(t.fees)&&Array.isArray(t.attachments)&&Array.isArray(t.logs)))return saved;
+ if(Array.isArray(saved)&&saved.every(t=>t&&Number.isInteger(t.id)&&typeof t.no==='string'&&['待审批','已确认','拦截中','拦截成功','拦截失败','已取消','已驳回'].includes(t.status)&&Array.isArray(t.fees)&&Array.isArray(t.attachments)&&Array.isArray(t.logs)))return saved.map(normalizeIntercept);
  }catch{}return createInitialIntercepts();
 }
 export function matchesInterceptTab(task:InterceptTask,tab:string){return tab==='全部'||!tab||tab==='已完成'&&['拦截成功','拦截失败'].includes(task.status)||tab==='取消/驳回'&&['已取消','已驳回'].includes(task.status)||task.status===tab;}
 export function forecastStatus(task:InterceptTask){return task.forecastStatus||({'待审批':'待预报','拦截中':'预报中','拦截成功':'预报成功','拦截失败':'预报失败','已取消':'已取消','已驳回':'预报失败'}[task.status]);}
 export function filterIntercepts(tasks:InterceptTask[],filters:InterceptFilters,tab:InterceptTab){
- const includes=(actual:string,expected:string)=>actual.toLowerCase().includes(expected.trim().toLowerCase());
- return tasks.filter(task=>matchesInterceptTab(task,tab)&&['no','waybill','container','system'].every(k=>includes(task[k as 'no'],filters[k as 'no']))
- &&['customer','source','interceptType','reconciliationStatus'].every(k=>!filters[k as 'customer']||task[k as 'customer']===filters[k as 'customer'])
- &&matchesInterceptTab(task,filters.status)&&(!filters.forecastStatus||forecastStatus(task)===filters.forecastStatus)
+ const includes=(actual:string,expected:string)=>(actual||'').toLowerCase().includes(expected.trim().toLowerCase());
+ return tasks.filter(task=>matchesInterceptTab(task,tab)&&(['no','waybillNo','customerOrderNo','latestTracking'] as const).every(key=>includes(task[key],filters[key]))
+ &&(!filters.customer||task.customer===filters.customer)&&(!filters.reconciliationStatus||task.reconciliationStatus===filters.reconciliationStatus)
  &&(!filters.from||task.appliedAt.slice(0,10)>=filters.from)&&(!filters.to||task.appliedAt.slice(0,10)<=filters.to));
 }
 const actionNames:Record<InterceptAction,string>={approve:'审批通过',reject:'审批驳回',cancel:'取消拦截',success:'拦截成功',failure:'拦截失败',remark:'内部备注'};
@@ -86,9 +93,25 @@ export function persistIntercepts(tasks:InterceptTask[],inventory?:InventoryStat
  try{localStorage.setItem(INTERCEPT_STORAGE_KEY,JSON.stringify(tasks));if(inventory)localStorage.setItem(OVERSEAS_INVENTORY_STORAGE_KEY,JSON.stringify(inventory));}
  catch{try{before===null?localStorage.removeItem(INTERCEPT_STORAGE_KEY):localStorage.setItem(INTERCEPT_STORAGE_KEY,before);if(inventory)beforeInventory===null?localStorage.removeItem(OVERSEAS_INVENTORY_STORAGE_KEY):localStorage.setItem(OVERSEAS_INVENTORY_STORAGE_KEY,beforeInventory);}catch{}throw new Error('保存失败，本地存储空间不足或不可用，请减少附件后重试');}
 }
-export function exportInterceptCsv(rows:InterceptTask[]){
- const fields:[string,(t:InterceptTask)=>unknown][]=[['客户名称',t=>t.customer],['拦截类型',t=>t.interceptType],['拦截单号',t=>t.no],['入仓号',t=>t.waybill],['柜号',t=>t.container],['系统柜号',t=>t.system],['预报单状态',forecastStatus],['拦截状态',t=>t.status],['拦截原因',t=>t.reason],['失败原因',t=>t.failReason],['取消/驳回原因',t=>t.terminationReason],['拦截箱数',t=>t.actualBoxes||t.boxes],['指令数量',t=>t.fees.length],['指令',t=>t.fees.map(f=>f.name+' '+f.unitPrice+' '+f.currency+'/'+f.unit).join('；')],['核销状态',t=>t.reconciliationStatus],['客户备注',t=>t.customerRemark],['内部备注',t=>t.remark],['拦截来源',t=>t.source],['申请人',t=>t.applicant],['申请时间',t=>t.appliedAt],['暂存单号',t=>t.storageNo]];
- const cell=(value:unknown)=>{let s=String(value??'');if(/^[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';};
- return '\uFEFF'+[fields.map(([name])=>cell(name)).join(','),...rows.map(row=>fields.map(([,read])=>cell(read(row))).join(','))].join('\r\n');
+export type InterceptColumnKey='customer'|'no'|'waybillNo'|'customerOrderNo'|'latestTracking'|'reason'|'boxes'|'instructionCount'|'instructions'|'reconciliationStatus'|'customerRemark'|'remark'|'applicant'|'appliedAt'|'result'|'failureReason'|'status'|'terminationReason';
+export function getInterceptColumns(tab:InterceptTab):{key:InterceptColumnKey;label:string}[]{
+ const columns:{key:InterceptColumnKey;label:string}[]=[{key:'customer',label:'客户名称'},{key:'no',label:'拦截单号'},{key:'waybillNo',label:'运单号'},{key:'customerOrderNo',label:'客户单号'},{key:'latestTracking',label:'最新运踪'},{key:'reason',label:'拦截原因'},{key:'boxes',label:'拦截箱数'},{key:'instructionCount',label:'指令数量'},{key:'instructions',label:'指令'},{key:'reconciliationStatus',label:'核销状态'},{key:'customerRemark',label:'客户备注'},{key:'remark',label:'内部备注'},{key:'applicant',label:'申请人'},{key:'appliedAt',label:'申请时间'}];
+ if(tab==='已完成'||tab==='全部')columns.push({key:'result',label:'拦截结果'},{key:'failureReason',label:'失败原因'});
+ if(tab==='取消/驳回'||tab==='全部')columns.push({key:'status',label:'拦截状态'},{key:'terminationReason',label:'取消/驳回原因'});
+ return columns;
+}
+export function getInterceptCellText(task:InterceptTask,key:InterceptColumnKey):string{
+ if(key==='boxes')return task.actualBoxes||String(task.boxes);
+ if(key==='instructionCount')return task.fees.filter(f=>f.status==='已处理').length+'/'+task.fees.length;
+ if(key==='instructions')return task.fees.map(f=>(f.status==='已处理'?'已处理':'待处理')+' '+Number((f.unitPrice*f.quantity).toFixed(4))+' '+({'人民币':'CNY','美元':'USD','欧元':'EUR','英镑':'GBP'}[f.currency]||f.currency)+' '+f.name+' ('+f.unitPrice+'/'+f.unit+')').join('；');
+ if(key==='status')return ['拦截成功','拦截失败'].includes(task.status)?'已完成':task.status==='待审批'?'待处理':task.status;
+ if(key==='result')return ['拦截成功','拦截失败'].includes(task.status)?task.status:'';
+ if(key==='failureReason')return task.status==='拦截失败'?task.failReason:'';
+ if(key==='terminationReason')return ['已取消','已驳回'].includes(task.status)?task.terminationReason:'';
+ return String(task[key]??'');
+}
+export function exportInterceptCsv(rows:InterceptTask[],tab:InterceptTab='全部'){
+ const columns=getInterceptColumns(tab);const cell=(value:unknown)=>{let s=String(value??'');if(/^[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';};
+ return '\uFEFF'+[columns.map(c=>cell(c.label)).join(','),...rows.map(row=>columns.map(c=>cell(getInterceptCellText(row,c.key))).join(','))].join('\r\n');
 }
 export {loadOverseasInventory};
