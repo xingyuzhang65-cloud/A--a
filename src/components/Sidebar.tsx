@@ -27,12 +27,14 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
     '客服运单管理': false,
     '海外中转单': ['instruction-list', 'instruction-management', 'staging-management', 'intercept-management'].includes(currentTab),
     '财务运单': false,
+    '海外仓应收': ['finance-receivables','finance-statements'].includes(currentTab),
     '工单': false,
     '服务订单': false,
     '货件管理': false
   });
 
   useEffect(() => {
+    if (['finance-receivables','finance-statements'].includes(currentTab)) setExpandedGroups(groups=>({...groups,'海外仓应收':true}));
     if (['instruction-list', 'instruction-management', 'staging-management', 'intercept-management'].includes(currentTab)) {
       setExpandedGroups(groups => ({ ...groups, '海外中转单': true }));
     }
@@ -130,6 +132,10 @@ export default function Sidebar({ currentTab, setCurrentTab, isCollapsed, setIsC
   const financeMenuItems: SidebarMenuItem[] = [
     { name: '指令费用审批', icon: FileCheck, id: 'finance-approval' },
     { name: '指令费用明细', icon: Receipt, id: 'finance-fees' },
+    { name:'海外仓应收',icon:Wallet,id:'finance-receivable-group',children:[
+      {name:'应收费用',icon:Receipt,id:'finance-receivables'},
+      {name:'应收对账单',icon:FileCheck,id:'finance-statements'},
+    ]},
     { name: '返回指令列表', icon: ClipboardList, id: 'instruction-list' },
   ];
   const visibleMenuItems = currentTab.startsWith('management-') ? managementMenuItems : currentTab.startsWith('finance-') ? financeMenuItems : menuItems;

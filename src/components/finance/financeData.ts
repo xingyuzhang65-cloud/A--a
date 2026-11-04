@@ -1,3 +1,4 @@
+import { financeMocks } from './financeMockData';
 import { loadListRows } from '../overseas/instructionListState';
 import { instructionSeedRows, pickupRows } from '../overseas/instructionListSource';
 import { loadInstructionDetail, getInstructionFeeTotal } from '../overseas/instructionDetailStore';
@@ -33,9 +34,26 @@ export function financeRecord(row: InstructionListRow, fees: InstructionFeeRow[]
   const status: ApprovalStatus = !approval || changed ? '待审批' : approval.status;
   return { row, fees, total, revision, approval, changed, status };
 }
+function mockApprovals(): ApprovalStore {
+  return Object.fromEntries(financeMocks.filter(mock => mock.status !== '待审批').map(mock => {
+    const revision=feeRevision(mock.row,mock.fees);
+    return [mock.row.instructionNo,{status:mock.status,revision,logs:[{
+      id:'finance-demo-review:'+mock.row.id,at:mock.row.created.slice(0,10)+' 18:30:00',operator:'天朗',
+      action:mock.status==='已通过'?'审批通过':'审批驳回',note:mock.note,total:getInstructionFeeTotal(mock.fees),revision,
+    }]}];
+  }));
+}
 export function loadFinanceRecords(): FinanceRecord[] {
-  const approvals = readApprovals();
-  return loadListRows([...pickupRows(), ...instructionSeedRows]).map(row => financeRecord(row, loadInstructionDetail(row).fees, approvals));
+  const approvals = {...mockApprovals(),...readApprovals()};
+  const source = loadListRows([...pickupRows(), ...instructionSeedRows]);
+  const existing = new Set(source.map(row => row.instructionNo));
+  const records = source.map(row => financeRecord(row, loadInstructionDetail(row).fees, approvals));
+  for(const mock of financeMocks){
+    if(existing.has(mock.row.instructionNo))continue;
+    const state=loadInstructionDetail(mock.row);
+    records.push(financeRecord(mock.row,state.feesEdited?state.fees:mock.fees.map(fee=>({...fee})),approvals));
+  }
+  return records;
 }
 export function decideApprovals(store: ApprovalStore, records: FinanceRecord[], action: 'approve' | 'reject' | 'resubmit', note: string, at = new Date().toLocaleString('sv-SE')): ApprovalStore {
   if (!records.length) throw new Error('请先选择指令单');
@@ -59,7 +77,9 @@ export function saveDecision(records: FinanceRecord[], action: 'approve' | 'reje
     if (!live || live.revision !== record.revision || live.status !== record.status) throw new Error('费用或状态已变更，请刷新后重新审批');
     return live;
   });
-  localStorage.setItem(FINANCE_KEY, JSON.stringify(decideApprovals(readApprovals(), checked, action, note)));
+  const stored=readApprovals();
+  const next=decideApprovals({...mockApprovals(),...stored},checked,action,note);
+  localStorage.setItem(FINANCE_KEY, JSON.stringify({...stored,...Object.fromEntries(checked.map(record=>[record.row.instructionNo,next[record.row.instructionNo]]))}));
 }
 export function csvCell(value: unknown): string {
   const text = String(value ?? '');

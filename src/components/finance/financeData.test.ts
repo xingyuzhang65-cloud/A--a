@@ -48,3 +48,24 @@ test('loads the same instruction fee source and rejects stale approvals after so
   const current=loadFinanceRecords().find(v=>v.row.instructionNo===r.row.instructionNo)!;
   saveDecision([current],'approve','');assert.equal(readApprovals()[r.row.instructionNo].status,'已通过');
 });
+
+test('all approval views have populated examples without changing source instructions or stored decisions',()=>{
+  const before=localStorage.getItem(FINANCE_KEY),records=loadFinanceRecords(),mock=records.filter(r=>r.row.id.startsWith('finance-mock:'));
+  assert.equal(mock.length,48);assert.equal(new Set(mock.map(r=>r.row.instructionNo)).size,48);
+  for(const status of ['待审批','已通过','已驳回'])assert.ok(mock.filter(r=>r.status===status).length>=12);
+  assert.ok(mock.some(r=>r.fees.some(f=>f.id.startsWith('finance-extra:'))));assert.ok(mock.some(r=>r.fees.some(f=>f.currency==='USD')));
+  assert.equal(localStorage.getItem(FINANCE_KEY),before);assert.deepEqual(loadFinanceRecords().filter(r=>r.row.id.startsWith('finance-mock:')),mock);
+});
+
+test('editing a seeded approved or rejected example resets its approval and preserves the original history on review',()=>{
+  for(const status of ['已通过','已驳回']){
+    const sample=loadFinanceRecords().find(r=>r.row.id.startsWith('finance-mock:')&&r.status===status)!;
+    const oldLog=sample.approval!.logs[0],state=loadInstructionDetail(sample.row);
+    saveInstructionDetail(sample.row,{...state,feesEdited:true,fees:sample.fees.map((fee,index)=>index===0?{...fee,unitPrice:fee.unitPrice+2}:fee)});
+    const edited=loadFinanceRecords().find(r=>r.row.instructionNo===sample.row.instructionNo)!;
+    assert.equal(edited.status,'待审批');assert.equal(edited.changed,true);assert.deepEqual(edited.approval!.logs[0],oldLog);
+    saveDecision([edited],'approve','重新核对通过');const reviewed=loadFinanceRecords().find(r=>r.row.instructionNo===sample.row.instructionNo)!;
+    assert.equal(reviewed.status,'已通过');assert.equal(reviewed.approval!.logs.length,2);assert.deepEqual(reviewed.approval!.logs[0],oldLog);
+  }
+  assert.equal(Object.keys(readApprovals()).length,2,'only the actual decisions are persisted');
+});

@@ -29,3 +29,29 @@
 .fin-customer-full{min-width:145px;max-width:210px;overflow:hidden;text-overflow:ellipsis}
 .fin-table{min-width:1480px}
 @media(max-width:650px){.fin-fee-form-body{padding:22px 16px 0;gap:18px}.fin-fee-label{width:90px}.fin-modal.wide{width:min(572px,95vw)}}
+
+/* Keep the short business summary aligned with the approval list. */
+.fin-drawer .fin-info-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:800px){.fin-drawer .fin-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.fin-toast.error{color:#dc2626;border-color:#fecaca;background:#fff7f7}
+.fin-toast.error>svg{color:#dc2626}
+
+.fin-table .fin-approval-actions{min-width:145px;white-space:nowrap}
+.fin-log-identity{font-size:12px;line-height:1.9;margin:0 0 18px;color:#65728a;overflow-wrap:anywhere}
+
+/* Fee details and additional charges follow the shared reference columns. */
+.fin-drawer{width:min(1320px,94vw)}
+.fin-fee-details{min-width:1160px;table-layout:fixed;border-collapse:collapse;font-size:12px}
+.fin-fee-details th,.fin-fee-details td{border:1px solid #e5e7eb;text-align:left;padding:12px 11px;font-size:12px;color:#606266;vertical-align:middle}
+.fin-fee-details th{height:38px;background:#f7f7f8;font-weight:600}
+.fin-fee-details td{height:52px;background:#fff}
+.fin-fee-details td:first-child{min-width:0;max-width:none;white-space:normal}
+.fin-fee-details td:last-child{min-width:0}
+.fin-fee-details .fin-fee-note-cell{white-space:normal;overflow-wrap:anywhere;line-height:1.6}
+.fin-fee-details .fin-badge{font-size:12px;padding:5px 8px;border-radius:2px}
+.fin-fee-details .fin-badge i{display:none}
+.fin-fee-details .fin-badge.pending{background:#22b5ee;color:#fff}
+.fin-fee-details .fin-badge.approved{background:#39b981;color:#fff}
+.fin-fee-details .fin-badge.rejected{background:#ed737c;color:#fff}
+@media(max-width:800px){.fin-drawer{width:100vw}}
