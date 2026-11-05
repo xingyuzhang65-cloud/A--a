@@ -1,8 +1,7 @@
 import type { InstructionListRow } from './instructionListTypes';
+import type { CargoBoxDisplayRow } from './CargoBoxTable';
 
-export interface InstructionCargoRow {
-  id: string;
-  boxNo: string;
+export interface InstructionCargoRow extends CargoBoxDisplayRow {
   packages: number;
   customerLines: string[];
   pickingLines: string[];

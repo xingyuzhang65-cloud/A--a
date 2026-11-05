@@ -15,16 +15,8 @@
 }
 
 .instruction-transfer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.instruction-detail-portal .instruction-transfer-table { min-width: 960px; }
-.instruction-detail-portal .instruction-transfer-table th:nth-child(1) { width: 72px; }
-.instruction-detail-portal .instruction-transfer-table th:nth-child(2) { width: 220px; }
-.instruction-detail-portal .instruction-transfer-table th:nth-child(3) { width: 200px; }
-.instruction-detail-portal .instruction-transfer-table th:nth-child(4) { width: 220px; }
-.instruction-detail-portal .instruction-transfer-table th:nth-child(5) { width: 240px; }
 .instruction-transfer-toolbar { flex-wrap: wrap; }
 .instruction-transfer-count { margin: 6px 0 0; color: #8492a6; }
-.instruction-transfer-selector { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
-.instruction-transfer-selector input { margin: 0; accent-color: #168ff5; }
 .instruction-transfer-batch { margin-bottom: 16px; padding: 14px; border: 1px solid #dce9fa; border-radius: 4px; background: #f7fbff; }
 .instruction-transfer-batch > label { font-weight: 600; color: #354052; }
 .instruction-transfer-batch > p { margin: 7px 0 10px; line-height: 1.6; }

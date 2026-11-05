@@ -71,14 +71,7 @@
 .oi-kind-radios { display: flex; align-items: center; flex-wrap: wrap; min-height: 34px; gap: 12px 20px; }
 .oi-kind-radios label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
 .oi-kind-radios input[type="radio"] { appearance: auto; width: 14px; height: 14px; min-width: 14px; margin: 0; padding: 0; border: 0; border-radius: 50%; accent-color: #5c67f2; cursor: pointer; }
-.oi-cargo-wrap, .oi-fee-table-wrap { max-width: 100%; overflow: auto; border: 1px solid #e9ebef; border-radius: 3px; scrollbar-width: thin; scrollbar-color: #d9dfe7 transparent; }
-.oi-cargo-table { width: 100%; min-width: 600px; table-layout: fixed; border-collapse: collapse; font-size: 12px; }
-.oi-cargo-table th, .oi-cargo-table td { height: 42px; padding: 7px 10px; border-right: 1px solid #e9ebef; border-bottom: 1px solid #e9ebef; text-align: center; vertical-align: middle; overflow-wrap: anywhere; }
-.oi-cargo-table th:last-child, .oi-cargo-table td:last-child { border-right: 0; }
-.oi-cargo-table tbody tr:last-child td { border-bottom: 0; }
-.oi-cargo-table th { position: sticky; z-index: 1; top: 0; background: #f7f7f8; color: #606266; font-weight: 500; white-space: nowrap; }
-.oi-cargo-table tbody tr:hover { background: #f8fafd; }
-.oi-cargo-table input:not([type="checkbox"]):not([type="radio"]), .oi-cargo-table select { width: 100%; height: 30px; padding: 0 7px; text-align: center; }
+.oi-fee-table-wrap { max-width: 100%; overflow: auto; border: 1px solid #e9ebef; border-radius: 3px; scrollbar-width: thin; scrollbar-color: #d9dfe7 transparent; }
 .oi-cargo-state { display: inline-block; padding: 1px 6px; border: 1px solid #faecd8; border-radius: 3px; background: #fdf6ec; color: #b88230; font-size: 12px; line-height: 18px; white-space: nowrap; }
 .oi-cargo-state.processing, .oi-cargo-state.oi-processing { border-color: #d9ecff; background: #f0f0ff; color: #1673ca; }
 .oi-cargo-state.shipped, .oi-cargo-state.oi-shipped { border-color: #e1f3d8; background: #f0f9eb; color: #67c23a; }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { InstructionCargoRow } from './instructionDetailData';
+import CargoBoxTable from './CargoBoxTable';
 
 type Props = { rows: InstructionCargoRow[]; numbers?: Record<string,string>; onSave: (numbers: Record<string,string>, editedIds: string[]) => boolean };
 const show = (value?: string) => value?.trim() || '—';
@@ -12,7 +13,6 @@ export default function InstructionCargoTransfers({rows,numbers,onSave}: Props) 
   const [error,setError]=useState('');
   const [message,setMessage]=useState('');
   const [editedIds,setEditedIds]=useState<string[]>([]);
-  const all=!!rows.length&&rows.every(row=>selected.includes(row.id));
   function open(){setDraft({...numbers});setSelected(rows.map(row=>row.id));setBatch('');setError('');setMessage('');setEditedIds([]);setEditing(true);}
   function markEdited(ids:string[]){setEditedIds(current=>[...current.filter(id=>!ids.includes(id)),...ids]);}
   function duplicates(values:Record<string,string>){const nonempty=Object.values(values).map(value=>value.trim()).filter(Boolean);return new Set(nonempty).size!==nonempty.length;}
@@ -39,9 +39,7 @@ export default function InstructionCargoTransfers({rows,numbers,onSave}: Props) 
       <div className="instruction-transfer-batch-footer"><span>也可直接修改下方每箱的转单号，未填写的货箱可留空。</span><button type="button" className="mc-btn" onClick={applyBatch}>应用到选中货箱</button></div>
       {error&&<p className="instruction-transfer-batch-error" role="alert">{error}</p>}{message&&<p className="instruction-transfer-batch-success" role="status">{message}</p>}
     </section>}
-    <div className="mc-intercept-cargo-box-wrap"><table className="mc-intercept-cargo-box-table instruction-transfer-table"><thead><tr><th><span className="instruction-transfer-selector">{editing&&<input type="checkbox" aria-label="全选填写转单号的货箱" checked={all} onChange={event=>setSelected(event.target.checked?rows.map(row=>row.id):[])}/>}序号</span></th><th>货箱号</th><th>客户数据</th><th>系统拣货（材重/实重）</th><th>转单号</th></tr></thead><tbody>
-      {rows.map((box,index)=><tr key={box.id}><td><span className="instruction-transfer-selector">{editing&&<input type="checkbox" aria-label={`选择第${index+1}箱填写转单号`} checked={selected.includes(box.id)} onChange={event=>{setSelected(current=>event.target.checked?[...current,box.id]:current.filter(id=>id!==box.id));setError('');setMessage('');}}/>}{index+1}</span></td><td className="font-mono">{show(box.boxNo)}</td><td>{box.customerLines.map((line,i)=><div key={i}>{line}</div>)}</td><td>{box.pickingLines.map((line,i)=><div key={i}>{line}</div>)}</td><td>{editing?<input className="instruction-transfer-input" aria-label={`第${index+1}箱转单号`} value={draft[box.id]||''} maxLength={200} placeholder="请输入转单号" onChange={event=>{setDraft(current=>({...current,[box.id]:event.target.value}));markEdited([box.id]);setError('');setMessage('');}}/>:<span className="instruction-transfer-number">{show(numbers?.[box.id])}</span>}</td></tr>)}
-      {!rows.length&&<tr><td colSpan={5} className="mc-intercept-fee-empty">暂无货箱信息</td></tr>}
-    </tbody></table></div>
+    <CargoBoxTable rows={rows} selection={{selectedIds:selected,onChange:editing?ids=>{setSelected(ids);setError('');setMessage('');}:undefined,allLabel:'全选填写转单号的货箱',rowLabel:(_box,index)=>`选择第${index+1}箱填写转单号`}}
+      trailingColumn={{label:'转单号',render:(box,index)=>editing?<input className="instruction-transfer-input" aria-label={`第${index+1}箱转单号`} value={draft[box.id]||''} maxLength={200} placeholder="请输入转单号" onChange={event=>{setDraft(current=>({...current,[box.id]:event.target.value}));markEdited([box.id]);setError('');setMessage('');}}/>:<span className="instruction-transfer-number">{show(numbers?.[box.id])}</span>}}/>
   </>;
 }

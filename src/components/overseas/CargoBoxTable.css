@@ -1,0 +1,73 @@
+.overseas-cargo-wrap {
+  width: 100%;
+  max-width: 100%;
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid #ebeef5;
+  background: #fff;
+  scrollbar-width: thin;
+  scrollbar-color: #dcdfe6 transparent;
+}
+
+.overseas-cargo-wrap:focus-visible {
+  outline: 2px solid #168ff5;
+  outline-offset: 2px;
+}
+
+.overseas-cargo-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  color: #606266;
+  font: 12px/1.6 "Microsoft YaHei", Arial, sans-serif;
+  text-align: center;
+}
+
+.overseas-cargo-table.overseas-cargo-with-extra { min-width: 920px; }
+.overseas-cargo-index { width: 40px; }
+.overseas-cargo-check { width: 54px; }
+.overseas-cargo-extra { width: 240px; }
+
+.overseas-cargo-table th,
+.overseas-cargo-table td {
+  box-sizing: border-box;
+  padding: 6px 12px;
+  border-right: 1px solid #ebeef5;
+  border-bottom: 1px solid #ebeef5;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.overseas-cargo-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 30px;
+  background: #f7f8fa;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.overseas-cargo-table td { height: 46px; background: #fff; }
+.overseas-cargo-table td > div { white-space: nowrap; }
+.overseas-cargo-table th:last-child,
+.overseas-cargo-table td:last-child { border-right: 0; }
+.overseas-cargo-table tbody tr:last-child td { border-bottom: 0; }
+.overseas-cargo-table tbody tr:hover td { background: #f5f7fa; }
+.overseas-cargo-table .overseas-cargo-number { font-variant-numeric: tabular-nums; }
+.overseas-cargo-table .overseas-cargo-empty { height: 120px; color: #909399; }
+
+.overseas-cargo-table input[type="checkbox"] {
+  appearance: auto;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+  accent-color: #168ff5;
+  cursor: pointer;
+}
+
+.overseas-cargo-table input[type="checkbox"]:disabled { cursor: default; }
