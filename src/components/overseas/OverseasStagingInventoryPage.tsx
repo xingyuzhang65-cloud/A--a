@@ -6,6 +6,7 @@ import type { InventoryRecord, InventoryState, InventoryStatus, ReleaseDraft, St
 import CatalogFeeDrawer from './CatalogFeeDrawer';
 import OperationInstructionTable from './OperationInstructionTable';
 import CargoBoxTable from './CargoBoxTable';
+import InventoryInstructionDetail from './InventoryInstructionDetail';
 import './InstructionManagementPage.css';
 import './StorageManagementPage.css';
 import './OverseasStorageInventoryPage.css';
@@ -45,6 +46,7 @@ export default function OverseasStorageInventoryPage({addToast}:Props) {
   const [expanded,setExpanded]=useState(false);const [selected,setSelected]=useState<string[]>([]);const [compact,setCompact]=useState(false);
   const [page,setPage]=useState(1);const [pageSize,setPageSize]=useState(50);
   const [drawer,setDrawer]=useState<{mode:'order'|'detail'|'logs';ids:string[]}|null>(null);
+  const detailRecord=drawer?.mode==='detail'?data.records.find(record=>record.id===drawer.ids[0]):undefined;
   const selectedRows=data.records.filter(r=>selected.includes(r.id));
   const ordersFor=(id:string)=>data.orders.filter(o=>o.recordIds.includes(id));
   const unique=(key:'customer'|'warehouseCode'|'service'):string[]=>[...new Set<string>(data.records.map(r=>r[key]).filter((value):value is string=>!!value))];
@@ -88,7 +90,7 @@ export default function OverseasStorageInventoryPage({addToast}:Props) {
     <div className="sm-summary-bar"><div className="sm-summary"><span>已选择内容：</span><span>总托盘数：<b>{selectedRows.length}</b></span><span>总箱数：<b>{selectedRows.reduce((n,r)=>n+r.boxes,0)}</b></span><span>总重量：<b>{fmt(selectedRows.reduce((n,r)=>n+r.weight,0))}</b></span><span>总体积：<b>{fmt(selectedRows.reduce((n,r)=>n+r.volume,0))}</b></span></div><button type="button" className="im-button im-primary im-settings-button" aria-label="切换表格密度" title="切换表格密度" onClick={()=>setCompact(!compact)}><Settings/></button></div>
     <div className="im-table-scroll"><table className={`im-table sm-table oi-table${compact?' oi-compact':''}`} style={{minWidth:74+135+cols.reduce((n,c)=>n+c.width,0)}}><colgroup><col style={{width:36}}/><col style={{width:38}}/>{cols.map(c=><col key={c.key} style={{width:c.width}}/>)}<col style={{width:135}}/></colgroup><thead><tr><th>#</th><th><input type="checkbox" aria-label="全选暂存管理" checked={all} onChange={()=>setSelected(current=>all?current.filter(id=>!visible.some(r=>r.id===id)):[...new Set([...current,...visible.map(r=>r.id)])])}/></th>{cols.map(c=><th key={c.key}>{c.label}</th>)}<th className="sm-actions-cell">操作</th></tr></thead><tbody>{visible.map((r,i)=><tr key={r.id} className={selected.includes(r.id)?'im-row-selected':''}><td>{(page-1)*pageSize+i+1}</td><td><input type="checkbox" aria-label={`选择${r.id}`} checked={selected.includes(r.id)} onChange={()=>setSelected(current=>current.includes(r.id)?current.filter(id=>id!==r.id):[...current,r.id])}/></td>{cols.map(c=><td key={c.key} title={c.key==='waybillNo'?r.waybillNo||'—':String(cell(r,c.key))}>{cell(r,c.key)}</td>)}<td className="sm-actions-cell"><span className="im-actions">{status==='暂存'&&<button type="button" onClick={()=>openOrder([r.id])}>下单</button>}<button type="button" onClick={()=>setDrawer({mode:'logs',ids:[r.id]})}>日志</button></span></td></tr>)}{!visible.length&&<tr className="im-empty"><td colSpan={cols.length+3}>暂无匹配库存记录</td></tr>}</tbody></table></div>
     <footer className="im-footer"><span>共 {rows.length} 条</span><button className="im-page-arrow" disabled={page<=1} onClick={()=>setPage(page-1)}>‹</button><span>{page} / {pages}</span><button className="im-page-arrow" disabled={page>=pages} onClick={()=>setPage(page+1)}>›</button><span className="im-select im-page-size"><select aria-label="暂存管理每页条数" value={pageSize} onChange={e=>{setPageSize(Number(e.target.value));setPage(1);}}>{[20,50,100].map(n=><option key={n} value={n}>{n}条/页</option>)}</select><ChevronDown/></span></footer></section>
-    {drawer&&<InventoryDrawer data={data} ids={drawer.ids} mode={drawer.mode} onClose={()=>setDrawer(null)} onSubmit={next=>{if(save(next)){setSelected([]);setDrawer(null);addToast(`已生成待审批申请 ${next.orders[0].applicationNo}`,'success');}}}/>}
+    {detailRecord&&detailRecord.status!=='暂存'?<InventoryInstructionDetail record={detailRecord} inventory={data} onClose={()=>setDrawer(null)}/>:drawer&&<InventoryDrawer data={data} ids={drawer.ids} mode={drawer.mode} onClose={()=>setDrawer(null)} onSubmit={next=>{if(save(next)){setSelected([]);setDrawer(null);addToast(`已生成待审批申请 ${next.orders[0].applicationNo}`,'success');}}}/>}
   </main>;
 }
 

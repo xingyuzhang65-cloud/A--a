@@ -59,7 +59,8 @@ function normalizedFee(fee: InstructionFeeRow): InstructionFeeRow {
 }
 function validAttachment(item: InstructionAttachment): boolean {
   return !!item && ['id','name','type','fileSize','uploadedBy','uploadedAt','dataUrl'].every(key => typeof item[key as keyof InstructionAttachment] === 'string')
-    && !!item.name.trim() && ['可见','不可见'].includes(item.customerVisible) && /^data:[^,]*;base64,/.test(item.dataUrl);
+    && !!item.name.trim() && ['可见','不可见'].includes(item.customerVisible)
+    && (item.dataUrl === '' || /^data:[^,]*;base64,/.test(item.dataUrl));
 }
 function validState(value: InstructionDetailState): boolean {
   return !!value && Array.isArray(value.fees) && value.fees.every(validFee) && Number.isFinite(getInstructionFeeTotal(value.fees)) && new Set(value.fees.map(fee => fee.id)).size === value.fees.length
@@ -87,7 +88,7 @@ function readStored(row: InstructionListRow): StoredDetail | null {
     return null;
   } catch { return null; }
 }
-export function loadInstructionDetail(row: InstructionListRow): InstructionDetailState {
+export function loadInstructionDetail(row: InstructionListRow, initialState?: InstructionDetailState): InstructionDetailState {
   const saved = readStored(row);
   if (saved) return {fees:saved.fees.map(normalizedFee),feesEdited:saved.feesEdited,attachments:saved.attachments.map(file => ({...file})),
     customerNote:saved.customerNote,internalRemark:saved.internalRemark,failureReason:saved.failureReason,updatedAt:saved.updatedAt,
@@ -96,6 +97,7 @@ export function loadInstructionDetail(row: InstructionListRow): InstructionDetai
     ...(saved.cargoTransferNumbers === undefined ? {} : {cargoTransferNumbers:{...saved.cargoTransferNumbers}}),
     ...(saved.cargoTransferOrder === undefined ? {} : {cargoTransferOrder:[...saved.cargoTransferOrder]}),
     ...(saved.trackingEvents === undefined ? {} : {trackingEvents:saved.trackingEvents.map(event => ({...event}))})};
+  if (initialState) return structuredClone(initialState);
   return {fees:buildInstructionDetail(row).feeRows.map(normalizedFee),feesEdited:false,attachments:[],
     customerNote:row.customerNote || '',internalRemark:row.internalRemark || '',failureReason:row.failureReason || ''};
 }
